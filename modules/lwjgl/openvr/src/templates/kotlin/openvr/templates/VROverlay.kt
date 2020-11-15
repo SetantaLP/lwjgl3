@@ -13,6 +13,23 @@ val VROverlay = "VROverlay".nativeClass(
     binding = OPENVR_FNTABLE_BINDING
 ) {
     documentation = "Overlay management methods."
+    nativeDirective("""
+#ifdef LWJGL_WINDOWS
+    #define APIENTRY __stdcall
+#else
+    #define APIENTRY
+#endif
+
+typedef struct HmdVector2_t
+{
+    float v[2];
+} HmdVector2_t;
+
+typedef struct HmdRect2_t
+{
+	struct HmdVector2_t vTopLeft;
+	struct HmdVector2_t vBottomRight;
+} HmdRect2_t;""")
 
     EVROverlayError(
         "FindOverlay",
@@ -36,29 +53,6 @@ val VROverlay = "VROverlay".nativeClass(
         "Destroys the specified overlay. When an application calls #ShutdownInternal() all overlays created by that app are automatically destroyed.",
 
         VROverlayHandle_t("ulOverlayHandle", "")
-    )
-
-    EVROverlayError(
-        "SetHighQualityOverlay",
-        """
-        Specify which overlay to use the high quality render path.
-
-        This overlay will be composited in during the distortion pass which results in it drawing on top of everything else, but also at a higher quality as it
-        samples the source texture directly rather than rasterizing into each eye's render texture first. Because if this, only one of these is supported at
-        any given time. It is most useful for overlays that are expected to take up most of the user's view (e.g. streaming video). This mode does not support
-        mouse input to your overlay.
-        """,
-
-        VROverlayHandle_t("ulOverlayHandle", "")
-    )
-
-    VROverlayHandle_t(
-        "GetHighQualityOverlay",
-        """
-        Returns the overlay handle of the current overlay being rendered using the single high quality overlay render path. Otherwise it will return
-        #k_ulOverlayHandleInvalid.
-        """,
-        void()
     )
 
     uint32_t(
@@ -145,11 +139,19 @@ val VROverlay = "VROverlay".nativeClass(
 
     EVROverlayError(
         "GetOverlayFlag",
-        "Sets flag setting for a given overlay.",
+        "Gets flag setting for a given overlay.",
 
         VROverlayHandle_t("ulOverlayHandle", ""),
         VROverlayFlags("eOverlayFlag", "", "VROverlayFlags_\\w+"),
         Check(1)..bool.p("pbEnabled", "")
+    )
+
+    EVROverlayError(
+        "GetOverlayFlags",
+        "Gets all the flags for a given overlay.",
+
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        Check(1)..uint32_t.p("pFlags", "")
     )
 
     EVROverlayError(
@@ -252,27 +254,24 @@ val VROverlay = "VROverlay".nativeClass(
     )
 
     EVROverlayError(
-        "SetOverlayAutoCurveDistanceRangeInMeters",
+        "SetOverlayCurvature",
         """
-        For high-quality curved overlays only, sets the distance range in meters from the overlay used to automatically curve the surface around the viewer.
-        Min is distance is when the surface will be most curved. Max is when least curved.
+        Use to draw overlay as a curved surface.
+
+        Curvature is a percentage from {@code (0..1]} where 1 is a fully closed cylinder. For a specific radius, curvature can be computed as:
+        {@code overlay.width / (2 PI r)}.
         """,
 
         VROverlayHandle_t("ulOverlayHandle", ""),
-        float("fMinDistanceInMeters", ""),
-        float("fMaxDistanceInMeters", "")
+        float("fCurvature", "")
     )
 
     EVROverlayError(
-        "GetOverlayAutoCurveDistanceRangeInMeters",
-        """
-        For high-quality curved overlays only, gets the distance range in meters from the overlay used to automatically curve the surface around the viewer.
-        Min is distance is when the surface will be most curved. Max is when least curved.
-        """,
+        "GetOverlayCurvature",
+        "Returns the curvature of the overlay as a percentage from {@code (0..1]} where 1 is a fully closed cylinder.",
 
         VROverlayHandle_t("ulOverlayHandle", ""),
-        Check(1)..float.p("pfMinDistanceInMeters", ""),
-        Check(1)..float.p("pfMaxDistanceInMeters", "")
+        Check(1)..float.p("pfCurvature", "")
     )
 
     EVROverlayError(
@@ -308,26 +307,6 @@ val VROverlay = "VROverlay".nativeClass(
 
         VROverlayHandle_t("ulOverlayHandle", ""),
         VRTextureBounds_t.p("pOverlayTextureBounds", "")
-    )
-
-    uint32_t(
-        "GetOverlayRenderModel",
-        "Gets render model to draw behind this overlay.",
-
-        VROverlayHandle_t("ulOverlayHandle", ""),
-        charASCII.p("pchValue", ""),
-        AutoSize("pchValue")..uint32_t("unBufferSize", ""),
-        HmdColor_t.p("pColor", ""),
-        Check(1)..EVROverlayError.p("pError", "")
-    )
-
-    EVROverlayError(
-        "SetOverlayRenderModel",
-        "",
-
-        VROverlayHandle_t("ulOverlayHandle", ""),
-        charASCII.const.p("pchRenderModel", ""),
-        HmdColor_t.p("pColor", "")
     )
 
     EVROverlayError(
@@ -412,6 +391,26 @@ val VROverlay = "VROverlay".nativeClass(
         VROverlayHandle_t("ulOverlayHandle", ""),
         VROverlayHandle_t("ulOverlayHandleParent", ""),
         HmdMatrix34_t.p("pmatParentOverlayToOverlayTransform", "")
+    )
+
+    EVROverlayError(
+        "SetOverlayTransformCursor",
+        """
+        Sets the hotspot for the specified overlay when that overlay is used as a cursor.
+
+        These are in texture space with 0,0 in the upper left corner of the texture and 1,1 in the lower right corner of the texture.    
+        """,
+
+        VROverlayHandle_t("ulCursorOverlayHandle", ""),
+        HmdVector2_t.const.p("pvHotspot", "")
+    )
+
+    EVROverlayError(
+        "GetOverlayTransformCursor",
+        "Gets cursor hotspot/transform for the specified overlay.",
+
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        HmdVector2_t.p("pvHotspot", "")
     )
 
     EVROverlayError(
@@ -521,59 +520,51 @@ val VROverlay = "VROverlay".nativeClass(
         VROverlayHandle_t("ulOverlayHandle", "")
     )
 
-    VROverlayHandle_t(
-        "GetGamepadFocusOverlay",
-        "Returns the current Gamepad focus overlay.",
-        void()
+    EVROverlayError(
+        "SetOverlayIntersectionMask",
+        "Sets a list of primitives to be used for controller ray intersection typically the size of the underlying UI in pixels (not in world space).",
+
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        VROverlayIntersectionMaskPrimitive_t.p("pMaskPrimitives", ""),
+        AutoSize("pMaskPrimitives")..uint32_t("unNumMaskPrimitives", ""),
+        Expression("VROverlayIntersectionMaskPrimitive.SIZEOF")..uint32_t("unPrimitiveSize", "")
     )
 
     EVROverlayError(
-        "SetGamepadFocusOverlay",
-        "Sets the current Gamepad focus overlay.",
+        "TriggerLaserMouseHapticVibration",
+        "Triggers a haptic event on the laser mouse controller for the specified overlay.",
 
-        VROverlayHandle_t("ulNewFocusOverlay", "")
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        float("fDurationSeconds", ""),
+        float("fFrequency", ""),
+        float("fAmplitude", "")
     )
 
     EVROverlayError(
-        "SetOverlayNeighbor",
+        "SetOverlayCursor",
+        "Sets the cursor to use for the specified overlay. This will be drawn instead of the generic blob when the laser mouse is pointed at the specified overlay.",
+
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        VROverlayHandle_t("ulCursorHandle", "")
+    )
+
+    EVROverlayError(
+        "SetOverlayCursorPositionOverride",
         """
-        Sets an overlay's neighbor. This will also set the neighbor of the "to" overlay to point back to the "from" overlay. If an overlay's neighbor is set to
-        invalid both ends will be cleared.
-        """",
+        Sets the override cursor position to use for this overlay in overlay mouse coordinates.
 
-        EOverlayDirection("eDirection", "", "EOverlayDirection_\\w+"),
-        VROverlayHandle_t("ulFrom", ""),
-        VROverlayHandle_t("ulTo", "")
+        This position will be used to draw the cursor instead of whatever the laser mouse cursor position is.
+        """,
+
+        VROverlayHandle_t("ulOverlayHandle", ""),
+        HmdVector2_t.const.p("pvCursor", "")
     )
 
     EVROverlayError(
-        "MoveGamepadFocusToNeighbor",
-        "Changes the Gamepad focus from one overlay to one of its neighbors.",
+        "ClearOverlayCursorPositionOverride",
+        "Clears the override cursor position for this overlay.",
 
-        EOverlayDirection("eDirection", "", "EOverlayDirection_\\w+"),
-        VROverlayHandle_t("ulFrom", ""),
-
-        returnDoc = "#EVROverlayError_VROverlayError_NoNeighbor if there is no neighbor in that direction"
-    )
-
-    EVROverlayError(
-        "SetOverlayDualAnalogTransform",
-        "Sets the analog input to Dual Analog coordinate scale for the specified overlay.",
-
-        VROverlayHandle_t("ulOverlay", ""),
-        EDualAnalogWhich("eWhich", "", "EDualAnalogWhich_\\w+"),
-        HmdVector2_t.p("pvCenter", ""),
-        float("fRadius", "")
-    )
-
-    EVROverlayError(
-        "GetOverlayDualAnalogTransform",
-        "Gets the analog input to Dual Analog coordinate scale for the specified overlay.",
-
-        VROverlayHandle_t("ulOverlay", ""),
-        EDualAnalogWhich("eWhich", "", "EDualAnalogWhich_\\w+"),
-        HmdVector2_t.p("pvCenter", ""),
-        Check(1)..float.p("pfRadius", "")
+        VROverlayHandle_t("ulOverlayHandle", "")
     )
 
     EVROverlayError(
@@ -602,7 +593,7 @@ val VROverlay = "VROverlay".nativeClass(
         Unsafe..void.p("pvBuffer", ""),
         uint32_t("unWidth", ""),
         uint32_t("unHeight", ""),
-        uint32_t("unDepth", "")
+        uint32_t("unBytesPerPixel", "")
     )
 
     EVROverlayError(
@@ -717,10 +708,15 @@ val VROverlay = "VROverlay".nativeClass(
 
     EVROverlayError(
         "ShowKeyboard",
-        "Show the virtual keyboard to accept input.",
+        """
+        Show the virtual keyboard to accept input.
+
+        In most cases, you should pass #EKeyboardFlags_KeyboardFlag_Modal to enable modal overlay behavior on the keyboard itself. See {@code EKeyboardFlags} for more.
+        """,
 
         EGamepadTextInputMode("eInputMode", "", "EGamepadTextInputMode_\\w+"),
         EGamepadTextInputLineMode("eLineInputMode", "", "EGamepadTextInputLineMode_\\w+"),
+        uint32_t("unFlags", ""),
         charASCII.const.p("pchDescription", ""),
         uint32_t("unCharMax", ""),
         charASCII.const.p("pchExistingText", ""),
@@ -730,11 +726,16 @@ val VROverlay = "VROverlay".nativeClass(
 
     EVROverlayError(
         "ShowKeyboardForOverlay",
-        "",
+        """
+        Show the virtual keyboard to accept input for an overlay.
+
+        In most cases, you should pass #EKeyboardFlags_KeyboardFlag_Modal to enable modal overlay behavior on the keyboard itself. See {@code EKeyboardFlags} for more.
+        """,
 
         VROverlayHandle_t("ulOverlayHandle", ""),
         EGamepadTextInputMode("eInputMode", "", "EGamepadTextInputMode_\\w+"),
         EGamepadTextInputLineMode("eLineInputMode", "", "EGamepadTextInputLineMode_\\w+"),
+        uint32_t("unFlags", ""),
         charASCII.const.p("pchDescription", ""),
         uint32_t("unCharMax", ""),
         charASCII.const.p("pchExistingText", ""),
@@ -769,24 +770,6 @@ val VROverlay = "VROverlay".nativeClass(
 
         VROverlayHandle_t("ulOverlayHandle", ""),
         HmdRect2_t("avoidRect", "")
-    )
-
-    EVROverlayError(
-        "SetOverlayIntersectionMask",
-        "Sets a list of primitives to be used for controller ray intersection typically the size of the underlying UI in pixels(not in world space).",
-
-        VROverlayHandle_t("ulOverlayHandle", ""),
-        VROverlayIntersectionMaskPrimitive_t.p("pMaskPrimitives", ""),
-        AutoSize("pMaskPrimitives")..uint32_t("unNumMaskPrimitives", ""),
-        Expression("VROverlayIntersectionMaskPrimitive.SIZEOF")..uint32_t("unPrimitiveSize", "")
-    )
-
-    EVROverlayError(
-        "GetOverlayFlags",
-        "",
-
-        VROverlayHandle_t("ulOverlayHandle", ""),
-        Check(1)..uint32_t.p("pFlags", "")
     )
 
     VRMessageOverlayResponse(

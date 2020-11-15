@@ -6,7 +6,7 @@ package llvm
 
 import org.lwjgl.generator.*
 
-val CLANG_BINDING = simpleBinding(Module.LLVM, libraryName = "CLANG", libraryExpression = "Configuration.LLVM_CLANG_LIBRARY_NAME, \"libclang\"")
+val CLANG_BINDING = simpleBinding(Module.LLVM, libraryName = "CLANG", libraryExpression = "Configuration.LLVM_CLANG_LIBRARY_NAME, \"clang\", \"libclang\"")
 val CLANG_BINDING_DELEGATE = CLANG_BINDING.delegate("ClangIndex.getLibrary()")
 
 val CXIndex = "CXIndex".handle
@@ -29,8 +29,6 @@ val CXIdxClientASTFile = "CXIdxClientASTFile".handle
 val CXIndexAction = "CXIndexAction".handle
 
 val time_t = IntegerType("time_t", PrimitiveMapping.LONG, unsigned = true) // TODO:
-
-val unsigned_long = IntegerType("unsigned long", PrimitiveMapping.CLONG, unsigned = true)
 
 val CXLoadDiag_Error = "enum CXLoadDiag_Error".enumType
 val CXDiagnosticSeverity = "enum CXDiagnosticSeverity".enumType

@@ -59,8 +59,9 @@ abstract class ModifierTarget<T : TemplateModifier> {
 
         modifiers.forEach {
             val old = this._modifiers.put(it::class, it)
-            if (old != null)
-                throw IllegalArgumentException("Template modifier ${it::class.java.simpleName} specified more than once.")
+            require(old == null) {
+                "Template modifier ${it::class.java.simpleName} specified more than once."
+            }
         }
 
         modifiers.forEach {
@@ -78,6 +79,7 @@ abstract class ModifierTarget<T : TemplateModifier> {
     inline infix fun <reified M : T> has(modifier: M) = modifiers[M::class] === modifier
 
     inline fun <reified M : T> has() = modifiers.containsKey(M::class)
+    inline fun <reified M : T> has(predicate: M.() -> Boolean) = (modifiers[M::class] as M?)?.predicate() ?: false
     inline fun <reified M : T> get() = modifiers[M::class] as M
 
 }

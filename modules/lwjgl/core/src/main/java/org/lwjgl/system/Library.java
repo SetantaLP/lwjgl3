@@ -29,7 +29,7 @@ import static org.lwjgl.system.Checks.*;
 public final class Library {
 
     /** The LWJGL shared library name. */
-    public static final String JNI_LIBRARY_NAME = Configuration.LIBRARY_NAME.get(System.getProperty("os.arch").contains("64") ? "lwjgl" : "lwjgl32");
+    public static final String JNI_LIBRARY_NAME = Configuration.LIBRARY_NAME.get(Platform.mapLibraryNameBundled("lwjgl"));
 
     static final String JAVA_LIBRARY_PATH = "java.library.path";
 
@@ -98,7 +98,7 @@ public final class Library {
         String libName = Platform.get().mapLibraryName(name);
 
         // METHOD 2: org.lwjgl.librarypath
-        URL libURL = context.getClassLoader().getResource(libName);
+        URL libURL = findURL(context, libName, name.contains("lwjgl"));
         if (libURL == null) {
             if (loadSystemFromLibraryPath(load, context, libName)) {
                 return;
@@ -108,6 +108,12 @@ public final class Library {
             // so that newer versions can be detected.
             boolean debugLoader = Configuration.DEBUG_LOADER.get(false);
             try {
+                if (isRegularFile(libURL)) {
+                    load.accept(libURL.getPath());
+                    apiLog("\tLoaded from classpath: " + libURL);
+                    return;
+                }
+
                 if (debugLoader) {
                     apiLog("\tUsing SharedLibraryLoader...");
                 }
@@ -220,7 +226,7 @@ public final class Library {
         SharedLibrary lib;
 
         // METHOD 2: org.lwjgl.librarypath
-        URL libURL = context.getClassLoader().getResource(libName);
+        URL libURL = findURL(context, libName, bundledWithLWJGL);
         if (libURL == null) {
             lib = loadNativeFromLibraryPath(context, libName);
             if (lib != null) {
@@ -229,6 +235,12 @@ public final class Library {
         } else {
             boolean debugLoader = Configuration.DEBUG_LOADER.get(false);
             try {
+                if (isRegularFile(libURL)) {
+                    lib = apiCreateLibrary(libURL.getPath());
+                    apiLog("\tLoaded from classpath: " + libURL);
+                    return lib;
+                }
+
                 // Always use the SLL if the library is found in the classpath,
                 // so that newer versions can be detected.
                 if (debugLoader) {
@@ -396,6 +408,26 @@ public final class Library {
             }
             throw t; // original error
         }
+    }
+
+    @Nullable
+    static URL findURL(Class<?> context, String resource, boolean bundledWithLWJGL) {
+        URL url = null;
+        if (bundledWithLWJGL) {
+            String bundledResource = Platform.mapLibraryPathBundled(resource);
+            if (!bundledResource.equals(resource)) {
+                url = context.getClassLoader().getResource(bundledResource);
+            }
+        }
+        return url == null ? context.getClassLoader().getResource(resource) : url;
+    }
+
+    private static boolean isRegularFile(URL url) {
+        if (!url.getProtocol().equals("file")) {
+            return false;
+        }
+        Path path = Paths.get(url.getPath());
+        return path.isAbsolute() && Files.isReadable(path);
     }
 
     @Nullable

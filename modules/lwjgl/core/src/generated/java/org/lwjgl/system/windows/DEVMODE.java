@@ -21,7 +21,7 @@ import static org.lwjgl.system.MemoryStack.*;
  * <h3>Member documentation</h3>
  * 
  * <ul>
- * <li>{@code dmDeviceName} &ndash; 
+ * <li>{@code dmDeviceName[32]} &ndash; 
  * A zero-terminated character array that specifies the "friendly" name of the printer or display; for example, "PCL/HP LaserJet" in the case of PCL/HP
  * LaserJet. This string is unique among device drivers. Note that this name may be truncated to fit in the {@code dmDeviceName} array.</li>
  * <li>{@code dmSpecVersion} &ndash; 
@@ -37,6 +37,12 @@ import static org.lwjgl.system.MemoryStack.*;
  * <li>{@code dmFields} &ndash; 
  * specifies whether certain members of the {@code DEVMODE} structure have been initialized. If a member is initialized, its corresponding bit is set
  * otherwise the bit is clear. A driver supports only those {@code DEVMODE} members that are appropriate for the printer or display technology.</li>
+ * <li><em>&lt;union&gt;</em>
+ * 
+ * <ul>
+ * <li><em>&lt;struct&gt;</em>
+ * 
+ * <ul>
  * <li>{@code dmOrientation} &ndash; for printer devices only</li>
  * <li>{@code dmPaperSize} &ndash; for printer devices only</li>
  * <li>{@code dmPaperLength} &ndash; for printer devices only</li>
@@ -45,6 +51,10 @@ import static org.lwjgl.system.MemoryStack.*;
  * <li>{@code dmCopies} &ndash; for printer devices only</li>
  * <li>{@code dmDefaultSource} &ndash; for printer devices only</li>
  * <li>{@code dmPrintQuality} &ndash; for printer devices only</li>
+ * </ul></li>
+ * <li><em>&lt;struct&gt;</em>
+ * 
+ * <ul>
  * <li>{@code dmPosition} &ndash; 
  * for display devices only, a {@link POINTL} structure that indicates the positional coordinates of the display device in reference to the desktop
  * area. The primary display device is always located at coordinates (0,0).</li>
@@ -60,20 +70,26 @@ import static org.lwjgl.system.MemoryStack.*;
  * image somewhere in the interior of the 1024 x 768 screen space or stretch the 640 x 480 image to fill the larger screen space. If
  * {@link GDI32#DM_DISPLAYFIXEDOUTPUT} is not set, this member must be zero. If {@link GDI32#DM_DISPLAYFIXEDOUTPUT} is set, this member must be one of the
  * following values:<br>{@link GDI32#DMDFO_DEFAULT}, {@link GDI32#DMDFO_CENTER}, {@link GDI32#DMDFO_STRETCH}</li>
+ * </ul></li>
+ * </ul></li>
  * <li>{@code dmColor} &ndash; for printer devices only</li>
  * <li>{@code dmDuplex} &ndash; for printer devices only</li>
  * <li>{@code dmYResolution} &ndash; for printer devices only</li>
  * <li>{@code dmTTOption} &ndash; for printer devices only</li>
  * <li>{@code dmCollate} &ndash; for printer devices only</li>
- * <li>{@code dmFormName} &ndash; for printer devices only</li>
+ * <li>{@code dmFormName[32]} &ndash; for printer devices only</li>
  * <li>{@code dmLogPixels} &ndash; the number of pixels per logical inch</li>
  * <li>{@code dmBitsPerPel} &ndash; 
  * specifies the color resolution, in bits per pixel, of the display device (for example: 4 bits for 16 colors, 8 bits for 256 colors, or 16 bits for
  * 65,536 colors)</li>
  * <li>{@code dmPelsWidth} &ndash; specifies the width, in pixels, of the visible device surface</li>
  * <li>{@code dmPelsHeight} &ndash; specifies the height, in pixels, of the visible device surface</li>
+ * <li><em>&lt;union&gt;</em>
+ * 
+ * <ul>
  * <li>{@code dmDisplayFlags} &ndash; specifies the device's display mode, one or more of:<br>{@link GDI32#DM_INTERLACED}, {@link GDI32#DMDISPLAYFLAGS_TEXTMODE}</li>
  * <li>{@code dmNup} &ndash; for printer devices only</li>
+ * </ul></li>
  * <li>{@code dmDisplayFrequency} &ndash; 
  * specifies the frequency, in hertz (cycles per second), of the display device in a particular mode. This value is also known as the display device's
  * vertical refresh rate.
@@ -337,8 +353,6 @@ public class DEVMODE extends Struct implements NativeResource {
     public short dmPrintQuality() { return ndmPrintQuality(address()); }
     /** Returns a {@link POINTL} view of the {@code dmPosition} field. */
     public POINTL dmPosition() { return ndmPosition(address()); }
-    /** Passes the {@code dmPosition} field to the specified {@link java.util.function.Consumer Consumer}. */
-    public DEVMODE dmPosition(java.util.function.Consumer<POINTL> consumer) { consumer.accept(dmPosition()); return this; }
     /** Returns the value of the {@code dmDisplayOrientation} field. */
     @NativeType("DWORD")
     public int dmDisplayOrientation() { return ndmDisplayOrientation(address()); }
@@ -734,8 +748,6 @@ public class DEVMODE extends Struct implements NativeResource {
         public short dmPrintQuality() { return DEVMODE.ndmPrintQuality(address()); }
         /** Returns a {@link POINTL} view of the {@code dmPosition} field. */
         public POINTL dmPosition() { return DEVMODE.ndmPosition(address()); }
-        /** Passes the {@code dmPosition} field to the specified {@link java.util.function.Consumer Consumer}. */
-        public DEVMODE.Buffer dmPosition(java.util.function.Consumer<POINTL> consumer) { consumer.accept(dmPosition()); return this; }
         /** Returns the value of the {@code dmDisplayOrientation} field. */
         @NativeType("DWORD")
         public int dmDisplayOrientation() { return DEVMODE.ndmDisplayOrientation(address()); }

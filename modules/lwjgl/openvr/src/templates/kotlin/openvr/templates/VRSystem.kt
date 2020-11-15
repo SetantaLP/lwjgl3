@@ -231,19 +231,6 @@ typedef struct HiddenAreaMesh_t
         AutoSize("pTrackedDevicePoseArray")..uint32_t("unTrackedDevicePoseArrayCount", "")
     )
 
-    void(
-        "ResetSeatedZeroPose",
-        """
-        Sets the zero pose for the seated tracker coordinate system to the current position and yaw of the HMD. After {@code ResetSeatedZeroPose} all
-        #GetDeviceToAbsoluteTrackingPose() calls that pass #ETrackingUniverseOrigin_TrackingUniverseSeated as the origin will be relative to this new zero
-        pose. The new zero coordinate system will not change the fact that the Y axis is up in the real world, so the next pose returned from
-        {@code GetDeviceToAbsoluteTrackingPose} after a call to {@code ResetSeatedZeroPose} may not be exactly an identity matrix.
-
-        NOTE: This function overrides the user's previously saved seated zero pose and should only be called as the result of a user action. Users are also
-        able to set their seated zero pose via the OpenVR Dashboard.
-        """
-    )
-
     HmdMatrix34_t(
         "GetSeatedZeroPoseToStandingAbsoluteTrackingPose",
         """
@@ -251,7 +238,7 @@ typedef struct HiddenAreaMesh_t
         used or transform object positions from one coordinate system to the other.
 
         The seated origin may or may not be inside the Play Area or Collision Bounds returned by {@code IVRChaperone}. Its position depends on what the user
-        has set from the Dashboard settings and previous calls to #ResetSeatedZeroPose().
+        has set from the Dashboard settings and previous calls to #ResetZeroPose().
         """,
         void()
     )
@@ -576,21 +563,6 @@ typedef struct HiddenAreaMesh_t
         void()
     )
 
-    uint32_t(
-        "DriverDebugRequest",
-        """
-        Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k, but this method can be called with a
-        smaller buffer. If the response exceeds the size of the buffer, it is truncated.
-        """,
-
-        TrackedDeviceIndex_t("unDeviceIndex", ""),
-        charASCII.const.p("pchRequest", ""),
-        Return(RESULT, "VR.k_unMaxDriverDebugResponseSize", includesNT = true)..nullable..charASCII.p("pchResponseBuffer", ""),
-        AutoSize("pchResponseBuffer")..uint32_t("unResponseBufferSize", ""),
-
-        returnDoc = "the size of the response including its terminating null"
-    )
-
     EVRFirmwareError(
         "PerformFirmwareUpdate",
         """
@@ -615,11 +587,27 @@ typedef struct HiddenAreaMesh_t
         """
     )
 
-    void(
-        "AcknowledgeQuit_UserPrompt",
+    uint32_t(
+        "GetAppContainerFilePaths",
         """
-        Call this to tell the system that the user is being prompted to save data. This halts the timeout and dismisses the dashboard (if it was up).
-        Applications should be sure to actually prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state.
+        Retrieves a null-terminated, semicolon-delimited list of UTF8 file paths that an application must have read access to when running inside of an app
+        container.
+        """,
+
+        Return(RESULT, includesNT = true)..nullable..charUTF8.p("pchBuffer", ""),
+        AutoSize("pchBuffer")..uint32_t("unBufferSize", ""),
+
+        returnDoc = "the number of bytes needed to hold the list"
+    )
+
+	charASCII.p(
+        "GetRuntimeVersion",
         """
+        Returns the current version of the SteamVR runtime. The returned string will remain valid until #ShutdownInternal() is called.
+
+        NOTE: Is it not appropriate to use this version to test for the presence of any SteamVR feature. Only use this version number for logging or showing to
+        a user, and not to try to detect anything at runtime. When appropriate, feature-specific presence information is provided by other APIs.
+        """,
+        void()
     )
 }

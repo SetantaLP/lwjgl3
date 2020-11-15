@@ -27,19 +27,22 @@ val EIOBufferError = "EIOBufferError".enumType
 val EVRSpatialAnchorError = "EVRSpatialAnchorError".enumType
 
 val EVRApplicationProperty = "EVRApplicationProperty".enumType
-val EVRApplicationTransitionState = "EVRApplicationTransitionState".enumType
 val EVRApplicationType = "EVRApplicationType".enumType
 val EVRButtonId = "EVRButtonId".enumType
 val EVRCompositorTimingMode = "EVRCompositorTimingMode".enumType
 val EVRControllerAxisType = "EVRControllerAxisType".enumType
+val EVRDebugError = "EVRDebugError".enumType
 val EVREye = "EVREye".enumType
 val EVREventType = "EVREventType".enumType
 val EVRNotificationStyle = "EVRNotificationStyle".enumType
 val EVRNotificationType = "EVRNotificationType".enumType
 val EVROverlayIntersectionMaskPrimitiveType = "EVROverlayIntersectionMaskPrimitiveType".enumType
+val EVRRenderModelTextureFormat = "EVRRenderModelTextureFormat".enumType
+val EVRSceneApplicationState = "EVRSceneApplicationState".enumType
 val EVRScreenshotPropertyFilenames = "EVRScreenshotPropertyFilenames".enumType
 val EVRScreenshotType = "EVRScreenshotType".enumType
 val EVRSubmitFlags = "EVRSubmitFlags".enumType
+val EVRSummaryType = "EVRSummaryType".enumType
 val EVRTrackedCameraFrameType = "EVRTrackedCameraFrameType".enumType
 val EVRSkeletalTransformSpace = "EVRSkeletalTransformSpace".enumType
 val EVRSkeletalMotionRange = "EVRSkeletalMotionRange".enumType
@@ -48,16 +51,19 @@ val EVRSkeletalTrackingLevel = "EVRSkeletalTrackingLevel".enumType
 
 val ChaperoneCalibrationState = "ChaperoneCalibrationState".enumType
 
+val EBlockQueueError = "EBlockQueueError".enumType
+val EBlockQueueReadType = "EBlockQueueReadType".enumType
 val EChaperoneConfigFile = "EChaperoneConfigFile".enumType
 val EColorSpace = "EColorSpace".enumType
 val EDeviceActivityLevel = "EDeviceActivityLevel".enumType
-val EDualAnalogWhich = "EDualAnalogWhich".enumType
+val EDeviceType = "EDeviceType".enumType
 val EGamepadTextInputMode = "EGamepadTextInputMode".enumType
 val EGamepadTextInputLineMode = "EGamepadTextInputLineMode".enumType
 val EHDCPError = "EHDCPError".enumType
 val EHiddenAreaMeshType = "EHiddenAreaMeshType".enumType
 val EIOBufferMode = "EIOBufferMode".enumType
 val EOverlayDirection = "EOverlayDirection".enumType
+val EPropertyWriteType = "EPropertyWriteType".enumType
 val EShowUIType = "EShowUIType".enumType
 val ETextureType = "ETextureType".enumType
 val ETrackedControllerRole = "ETrackedControllerRole".enumType
@@ -66,6 +72,8 @@ val ETrackedDeviceProperty = "ETrackedDeviceProperty".enumType
 val ETrackedPropertyError = "ETrackedPropertyError".enumType
 val ETrackingResult = "ETrackingResult".enumType
 val ETrackingUniverseOrigin = "ETrackingUniverseOrigin".enumType
+
+val HeadsetViewMode_t = "HeadsetViewMode_t".enumType
 
 val VRMessageOverlayResponse = "VRMessageOverlayResponse".enumType
 val VROverlayFlags = "VROverlayFlags".enumType
@@ -84,12 +92,14 @@ val TrackedCameraHandle_t = typedef(uint64_t, "TrackedCameraHandle_t")
 val TrackedDeviceIndex_t = typedef(uint32_t, "TrackedDeviceIndex_t")
 val WebConsoleHandle_t = typedef(uint64_t, "WebConsoleHandle_t")
 val DriverId_t = typedef(uint32_t, "DriverId_t")
+val PathHandle_t = typedef(uint64_t, "PathHandle_t")
 
 val VRComponentProperties = typedef(uint32_t, "VRComponentProperties")
 val VRNotificationId = typedef(uint32_t, "VRNotificationId")
 val VROverlayHandle_t = typedef(uint64_t, "VROverlayHandle_t")
 val BoneIndex_t = typedef(int32_t, "BoneIndex_t")
 val IOBufferHandle_t = typedef(uint64_t, "IOBufferHandle_t")
+val VrProfilerEventHandle_t = typedef(uint64_t, "VrProfilerEventHandle_t")
 
 val SpatialAnchorHandle_t = typedef(uint32_t, "SpatialAnchorHandle_t")
 val glSharedTextureHandle_t = typedef(opaque_p, "glSharedTextureHandle_t")
@@ -172,6 +182,12 @@ val DistortionCoordinates_t = struct(Module.OPENVR, "DistortionCoordinates", nat
     float("rfBlue", "the UVs for the blue channel")[2]
 }
 
+val Texture_t = struct(Module.OPENVR, "Texture", nativeName = "Texture_t") {
+    opaque_p("handle", "") // See ETextureType definition above
+    ETextureType("eType", "").links("ETextureType_\\w+")
+    EColorSpace("eColorSpace", "").links("EColorSpace_\\w+")
+}
+
 val TrackedDevicePose_t = struct(Module.OPENVR, "TrackedDevicePose", nativeName = "TrackedDevicePose_t") {
     documentation = "Describes a single pose for a tracked object."
 
@@ -186,15 +202,83 @@ val TrackedDevicePose_t = struct(Module.OPENVR, "TrackedDevicePose", nativeName 
     )
 }
 
-val VREvent_Reserved_t = struct(Module.OPENVR, "VREventReserved", nativeName = "VREvent_Reserved_t", mutable = false) {
-    documentation = "Not actually used for any events."
+val VRTextureBounds_t = struct(Module.OPENVR, "VRTextureBounds", nativeName = "VRTextureBounds_t") {
+    documentation = "Allows the application to control what part of the provided texture will be used in the frame buffer."
 
-    uint64_t("reserved0", "")
-    uint64_t("reserved1", "")
-    uint64_t("reserved2", "")
-    uint64_t("reserved3", "")
-    uint64_t("reserved4", "")
-    uint64_t("reserved5", "")
+    float("uMin", "")
+    float("vMin", "")
+    float("uMax", "")
+    float("vMax", "")
+}
+
+val VRTextureWithPose_t = struct(Module.OPENVR, "VRTextureWithPose", nativeName = "VRTextureWithPose_t") {
+    documentation = "Allows specifying pose used to render provided scene texture (if different from value returned by #WaitGetPoses())."
+
+    opaque_p("handle", "")
+    ETextureType("eType", "")
+    EColorSpace("eColorSpace", "")
+    HmdMatrix34_t("mDeviceToAbsoluteTracking", "actual pose used to render scene textures")
+}
+
+val VRTextureDepthInfo_t = struct(Module.OPENVR, "VRTextureDepthInfo", nativeName = "VRTextureDepthInfo_t") {
+    documentation = ""
+
+    opaque_p("handle", "")
+    HmdMatrix44_t("mProjection", "")
+    HmdVector2_t("vRange", "")
+}
+
+val VRTextureWithDepth_t = struct(Module.OPENVR, "VRTextureWithDepth", nativeName = "VRTextureWithDepth_t") {
+    documentation = ""
+
+    opaque_p("handle", "")
+    ETextureType("eType", "")
+    EColorSpace("eColorSpace", "")
+    VRTextureDepthInfo_t("depth", "")
+}
+
+val VRTextureWithPoseAndDepth_t = struct(Module.OPENVR, "VRTextureWithPoseAndDepth", nativeName = "VRTextureWithPoseAndDepth_t") {
+    documentation = ""
+
+    opaque_p("handle", "")
+    ETextureType("eType", "")
+    EColorSpace("eColorSpace", "")
+    HmdMatrix34_t("mDeviceToAbsoluteTracking", "")
+    VRTextureDepthInfo_t("depth", "")
+}
+
+val VRVulkanTextureData_t = struct(Module.OPENVR, "VRVulkanTextureData", nativeName = "VRVulkanTextureData_t") {
+    documentation =
+        """
+        Data required for passing Vulkan textures to #Submit(). Be sure to call #ShutdownInternal() before destroying these resources.
+
+        Please see <a href="https://github.com/ValveSoftware/openvr/wiki/Vulkan">https://github.com/ValveSoftware/openvr/wiki/Vulkan</a> for Vulkan-specific
+        documentation.
+        """
+
+    uint64_t("m_nImage", "VkImage")
+    VkDevice_T.p("m_pDevice", "")
+    VkPhysicalDevice_T.p("m_pPhysicalDevice", "")
+    VkInstance_T.p("m_pInstance", "")
+    VkQueue_T.p("m_pQueue", "")
+    uint32_t("m_nQueueFamilyIndex", "")
+    uint32_t("m_nWidth", "")
+    uint32_t("m_nHeight", "")
+    uint32_t("m_nFormat", "")
+    uint32_t("m_nSampleCount", "")
+}
+
+val VRVulkanTextureArrayData_t = struct(Module.OPENVR, "VRVulkanTextureArrayData", nativeName = "VRVulkanTextureArrayData_t") {
+    documentation =
+        """
+        Data required for passing Vulkan textures to #Submit(). Be sure to call #ShutdownInternal() before destroying these resources.
+        
+        Please see <a href="https://github.com/ValveSoftware/openvr/wiki/Vulkan">https://github.com/ValveSoftware/openvr/wiki/Vulkan</a> for Vulkan-specific
+        documentation.
+        """
+
+    uint32_t("m_unArrayIndex", "")
+    uint32_t("m_unArraySize", "")
 }
 
 val VREvent_Controller_t = struct(Module.OPENVR, "VREventController", nativeName = "VREvent_Controller_t", mutable = false) {
@@ -268,6 +352,17 @@ val VREvent_Chaperone_t = struct(Module.OPENVR, "VREventChaperone", nativeName =
     uint64_t("m_nCurrentUniverse", "")
 }
 
+val VREvent_Reserved_t = struct(Module.OPENVR, "VREventReserved", nativeName = "VREvent_Reserved_t", mutable = false) {
+    documentation = "Not actually used for any events."
+
+    uint64_t("reserved0", "")
+    uint64_t("reserved1", "")
+    uint64_t("reserved2", "")
+    uint64_t("reserved3", "")
+    uint64_t("reserved4", "")
+    uint64_t("reserved5", "")
+}
+
 val VREvent_PerformanceTest_t = struct(Module.OPENVR, "VREventPerformanceTest", nativeName = "VREvent_PerformanceTest_t", mutable = false) {
     uint32_t("m_nFidelityLevel", "")
 }
@@ -317,14 +412,6 @@ val VREvent_MessageOverlay_t = struct(Module.OPENVR, "VREventMessageOverlay", na
 val VREvent_Property_t = struct(Module.OPENVR, "VREventProperty", nativeName = "VREvent_Property_t", mutable = false) {
     PropertyContainerHandle_t("container", "")
     ETrackedDeviceProperty("prop", "").links("ETrackedDeviceProperty_\\w+")
-}
-
-val VREvent_DualAnalog_t = struct(Module.OPENVR, "VREventDualAnalog", nativeName = "VREvent_DualAnalog_t", mutable = false) {
-    float("x", "coordinates are -1..1 analog values")
-	float("y", "coordinates are -1..1 analog values")
-	float("transformedX", "transformed by the center and radius numbers provided by the overlay")
-	float("transformedY", "transformed by the center and radius numbers provided by the overlay")
-	EDualAnalogWhich("which", "")
 }
 
 val VREvent_HapticVibration_t = struct(Module.OPENVR, "VREventHapticVibration", nativeName = "VREvent_HapticVibration_t", mutable = false) {
@@ -399,7 +486,6 @@ val VREvent_Data_t = union(Module.OPENVR, "VREventData", nativeName = "VREvent_D
     VREvent_EditingCameraSurface_t("cameraSurface", "")
     VREvent_MessageOverlay_t("messageOverlay", "")
     VREvent_Property_t("property", "")
-    VREvent_DualAnalog_t("dualAnalog", "")
     VREvent_HapticVibration_t("hapticVibration", "")
     VREvent_WebConsole_t("webConsole", "")
     VREvent_InputBindingLoad_t("inputBinding", "")
@@ -438,6 +524,25 @@ val IntersectionMaskCircle_t = struct(Module.OPENVR, "IntersectionMaskCircle", n
     float("m_flCenterX", "")
     float("m_flCenterY", "")
     float("m_flRadius", "")
+}
+
+val VROverlayView_t = struct(Module.OPENVR, "VROverlayView_t", mutable = false) {
+    VROverlayHandle_t("overlayHandle", "")
+    Texture_t("texture", "")
+    VRTextureBounds_t("textureBounds", "")
+}
+
+val VRVulkanDevice_t = struct(Module.OPENVR, "VRVulkanDevice", nativeName = "VRVulkanDevice_t") {
+    VkInstance_T.p("m_pInstance", "")
+    VkDevice_T.p("m_pDevice", "")
+    VkPhysicalDevice_T.p("m_pPhysicalDevice", "")
+    VkQueue_T.p("m_pQueue", "")
+    uint32_t("m_uQueueFamilyIndex", "")
+}
+
+val VRNativeDevice_t = struct(Module.OPENVR, "VRNativeDevice", nativeName = "VRNativeDevice_t") {
+    opaque_p("handle", "")
+    EDeviceType("eType", "")
 }
 
 val VROverlayIntersectionMaskPrimitive_Data_t = union(Module.OPENVR, "VROverlayIntersectionMaskPrimitiveData", nativeName = "VROverlayIntersectionMaskPrimitive_Data_t") {
@@ -482,97 +587,11 @@ val VRControllerState_t = struct(Module.OPENVR, "VRControllerState", nativeName 
     VRControllerAxis_t("rAxis", "axis data for the controller's analog inputs")[5]
 }
 
-val Texture_t = struct(Module.OPENVR, "Texture", nativeName = "Texture_t") {
-    opaque_p("handle", "") // See ETextureType definition above
-    ETextureType("eType", "").links("ETextureType_\\w+")
-    EColorSpace("eColorSpace", "").links("EColorSpace_\\w+")
-}
-
-val VRTextureBounds_t = struct(Module.OPENVR, "VRTextureBounds", nativeName = "VRTextureBounds_t") {
-    documentation = "Allows the application to control what part of the provided texture will be used in the frame buffer."
-
-    float("uMin", "")
-    float("vMin", "")
-    float("uMax", "")
-    float("vMax", "")
-}
-
-val VRTextureWithPose_t = struct(Module.OPENVR, "VRTextureWithPose", nativeName = "VRTextureWithPose_t") {
-    documentation = "Allows specifying pose used to render provided scene texture (if different from value returned by #WaitGetPoses())."
-
-	HmdMatrix34_t("mDeviceToAbsoluteTracking", "actual pose used to render scene textures")
-}
-
-val VRTextureDepthInfo_t = struct(Module.OPENVR, "VRTextureDepthInfo", nativeName = "VRTextureDepthInfo_t") {
-    documentation = ""
-
-	opaque_p("handle", "")
-	HmdMatrix44_t("mProjection", "")
-	HmdVector2_t("vRange", "")
-}
-
-val VRTextureWithDepth_t = struct(Module.OPENVR, "VRTextureWithDepth", nativeName = "VRTextureWithDepth_t") {
-    documentation = ""
-
-	VRTextureDepthInfo_t("depth", "")
-}
-
-val VRTextureWithPoseAndDepth_t = struct(Module.OPENVR, "VRTextureWithPoseAndDepth", nativeName = "VRTextureWithPoseAndDepth_t") {
-    documentation = ""
-
-	VRTextureDepthInfo_t("depth", "")
-}
-
-val VRVulkanTextureData_t = struct(Module.OPENVR, "VRVulkanTextureData", nativeName = "VRVulkanTextureData_t") {
-    documentation =
-        """
-        Data required for passing Vulkan textures to #Submit(). Be sure to call #ShutdownInternal() before destroying these resources.
-
-        Please see <a href="https://github.com/ValveSoftware/openvr/wiki/Vulkan">https://github.com/ValveSoftware/openvr/wiki/Vulkan</a> for Vulkan-specific
-        documentation.
-        """
-
-    uint64_t("m_nImage", "VkImage")
-    VkDevice_T.p("m_pDevice", "")
-    VkPhysicalDevice_T.p("m_pPhysicalDevice", "")
-    VkInstance_T.p("m_pInstance", "")
-    VkQueue_T.p("m_pQueue", "")
-    uint32_t("m_nQueueFamilyIndex", "")
-    uint32_t("m_nWidth", "")
-    uint32_t("m_nHeight", "")
-    uint32_t("m_nFormat", "")
-    uint32_t("m_nSampleCount", "")
-}
-
-val Compositor_OverlaySettings = struct(Module.OPENVR, "CompositorOverlaySettings", nativeName = "Compositor_OverlaySettings") {
-    documentation = "Allows the application to customize how the overlay appears in the compositor."
-
-    uint32_t("size", "{@code sizeof(Compositor_OverlaySettings)}")
-    bool("curved", "")
-    bool("antialias", "")
-    float("scale", "")
-    float("distance", "")
-    float("alpha", "")
-    float("uOffset", "")
-    float("vOffset", "")
-    float("uScale", "")
-    float("vScale", "")
-    float("gridDivs", "")
-    float("gridWidth", "")
-    float("gridScale", "")
-    HmdMatrix44_t("transform", "")
-}
-
 val VRBoneTransform_t = struct(Module.OPENVR, "VRBoneTransform", nativeName = "VRBoneTransform_t", mutable = false) {
     documentation = "Holds the transform for a single bone."
 
     HmdVector4_t("position", "")
 	HmdQuaternionf_t("orientation", "")
-}
-
-val AppOverrideKeys_t = struct(Module.OPENVR, "AppOverrideKeys", nativeName = "AppOverrideKeys_t") {
-    charASCII.p("pchKey", "")
-    char.p("pchValue", "")
 }
 
 val Compositor_FrameTiming = struct(Module.OPENVR, "CompositorFrameTiming", nativeName = "Compositor_FrameTiming", mutable = false) {
@@ -651,6 +670,39 @@ val Compositor_CumulativeStats = struct(Module.OPENVR, "CompositorCumulativeStat
     uint32_t("m_nNumReprojectedFramesTimedOut", "")
 }
 
+val Compositor_StageRenderSettings = struct(Module.OPENVR, "CompositorStageRenderSettings", nativeName = "Compositor_StageRenderSettings", mutable = false) {
+    HmdColor_t("m_PrimaryColor", "Primary color is applied as a tint to (i.e. multiplied with) the model's texture.")
+    HmdColor_t("m_SecondaryColor", "")
+
+    float(
+        "m_flVignetteInnerRadius",
+        "Vignette radius is in meters and is used to fade to the specified secondary solid color over that 3D distance from the origin of the playspace."
+    )
+    float("m_flVignetteOuterRadius", "")
+
+    float(
+        "m_flFresnelStrength",
+        """
+        Fades to the secondary color based on view incidence.
+
+        This variable controls the linearity of the effect. It is mutually exclusive with vignette. Additionally, it treats the mesh as faceted.
+        """
+    )
+
+    bool("m_bBackfaceCulling", "Controls backface culling.")
+
+    bool(
+        "m_bGreyscale",
+        """
+        Converts the render model's texture to luma and applies to rgb equally.
+
+        This is useful to combat compression artifacts that can occur on desaturated source material.
+        """
+    )
+
+    bool("m_bWireframe", "Renders mesh as a wireframe.")
+}
+
 val NotificationBitmap_t = struct(Module.OPENVR, "NotificationBitmap", nativeName = "NotificationBitmap_t") {
     documentation = "Used for passing graphic data."
 
@@ -697,6 +749,14 @@ val InputOriginInfo_t = struct(Module.OPENVR, "InputOriginInfo", nativeName = "I
     charUTF8("rchRenderModelComponentName", "")[128]
 }
 
+val InputBindingInfo_t = struct(Module.OPENVR, "InputBindingInfo", nativeName = "InputBindingInfo_t", mutable = false) {
+    charASCII("rchDevicePathName", "")[128]
+	charASCII("rchInputPathName", "")[128]
+	charASCII("rchModeName", "")[128]
+	charASCII("rchSlotName", "")[128]
+    charASCII("rchInputSourceType", "")[32]
+}
+
 val VRActiveActionSet_t = struct(Module.OPENVR, "VRActiveActionSet", nativeName = "VRActiveActionSet_t") {
     VRActionSetHandle_t("ulActionSet", "this is the handle of the action set to activate for this frame")
 	VRInputValueHandle_t(
@@ -715,6 +775,11 @@ val VRActiveActionSet_t = struct(Module.OPENVR, "VRActiveActionSet", nativeName 
         """
         the priority of this action set relative to other action sets. Any inputs bound to a source (e.g. trackpad, joystick, trigger) will disable bindings in
         other active action sets with a smaller priority.
+
+        Overlay applications (i.e. ApplicationType_Overlay) may set their action set priority to a value between #k_nActionSetOverlayGlobalPriorityMin and
+        #k_nActionSetOverlayGlobalPriorityMax to cause any inputs bound to a source used by that action set to be disabled in scene applications.
+		
+        No action set priority may value may be larger than #k_nActionSetPriorityReservedMin.
         """
     )
 }
@@ -744,6 +809,50 @@ val SpatialAnchorPose_t = struct(Module.OPENVR, "SpatialAnchorPose", nativeName 
 	HmdMatrix34_t("mAnchorToAbsoluteTracking", "")
 }
 
+/*val PropertyWrite_t = struct(Module.OPENVR, "PropertyWrite", nativeName = "PropertyWrite_t") {
+    ETrackedDeviceProperty("prop", "").links("ETrackedDeviceProperty_\\w+")
+    EPropertyWriteType("writeType", "").links("EPropertyWriteType_\\w+")
+    ETrackedPropertyError("eSetError", "").links("ETrackedPropertyError_\\w+")
+    void.p("pvBuffer", "");
+    AutoSize("pvBuffer")..uint32_t("unBufferSize", "")
+    PropertyTypeTag_t("unTag", "")
+    ETrackedPropertyError("eError", "").links("ETrackedPropertyError_\\w+")
+}
+
+val PropertyRead_t = struct(Module.OPENVR, "PropertyRead", nativeName = "PropertyRead_t") {
+    ETrackedDeviceProperty("prop", "").links("ETrackedDeviceProperty_\\w+")
+    void.p("pvBuffer", "");
+    AutoSize("pvBuffer")..uint32_t("unBufferSize", "")
+    PropertyTypeTag_t("unTag", "")
+    uint32_t("unRequiredBufferSize", "")
+    ETrackedPropertyError("eError", "").links("ETrackedPropertyError_\\w+")
+}
+
+val CVRPropertyHelpers = struct(Module.OPENVR, "CVRPropertyHelpers", mutable = false) {
+    intptr_t("m_pProperties", "")
+}
+
+val PathWrite_t = struct(Module.OPENVR, "PathWrite", nativeName = "PathWrite_t") {
+    PathHandle_t("ulPath", "")
+    EPropertyWriteType("writeType", "").links("EPropertyWriteType_\\w+")
+    ETrackedPropertyError("eSetError", "").links("ETrackedPropertyError_\\w+")
+    void.p("pvBuffer", "");
+    AutoSize("pvBuffer")..uint32_t("unBufferSize", "")
+    PropertyTypeTag_t("unTag", "")
+    ETrackedPropertyError("eError", "").links("ETrackedPropertyError_\\w+")
+    charASCII.p("pszPath", "")
+}
+
+val PathRead_t = struct(Module.OPENVR, "PathRead", nativeName = "PathRead_t") {
+    PathHandle_t("ulPath", "")
+    void.p("pvBuffer", "");
+    AutoSize("pvBuffer")..uint32_t("unBufferSize", "")
+    PropertyTypeTag_t("unTag", "")
+    uint32_t("unRequiredBufferSize", "")
+    ETrackedPropertyError("eError", "").links("ETrackedPropertyError_\\w+")
+    charASCII.p("pszPath", "")
+}*/
+
 val RenderModel_Vertex_t = struct(Module.OPENVR, "RenderModelVertex", nativeName = "RenderModel_Vertex_t", mutable = false) {
     documentation = "A single vertex in a render model."
 
@@ -772,10 +881,8 @@ val RenderModel_TextureMap_t = struct(Module.OPENVR, "RenderModelTextureMap", na
 
     uint16_t("unWidth", "")
     uint16_t("unHeight", "width and height of the texture map in pixels")
-    uint8_t.const.p(
-        "rubTextureMapData",
-        "Map texture data. All textures are RGBA with 8 bits per channel per pixel. Data size is width * height * 4ub"
-    )
+    uint8_t.const.p("rubTextureMapData", "Map texture data.")
+    EVRRenderModelTextureFormat("format", "").links("EVRRenderModelTextureFormat_\\w+")
 }
 
 val RenderModel_ControllerMode_State_t = struct(Module.OPENVR, "RenderModelControllerModeState", nativeName = "RenderModel_ControllerMode_State_t") {
@@ -799,8 +906,15 @@ val CameraVideoStreamFrameHeader_t = struct(Module.OPENVR, "CameraVideoStreamFra
 
     uint32_t("nFrameSequence", "")
 
-    TrackedDevicePose_t("standingTrackedDevicePose", "")
+    TrackedDevicePose_t("trackedDevicePose", "")
     uint64_t("ulFrameExposureTime", "mid-point of the exposure of the image in host system ticks")
+}
+
+val Compositor_BenchmarkResults = struct(Module.OPENVR, "Compositor_BenchmarkResults", nativeName = "Compositor_BenchmarkResults", mutable = false) {
+    documentation = "Provides compositor benchmark results to the app."
+
+    float("m_flMegaPixelsPerSecond", "Measurement of GPU MP/s performed by compositor benchmark")
+    float("m_flHmdRecommendedMegaPixelsPerSecond", "Recommended default MP/s given the HMD resolution, refresh, and panel mask.")
 }
 
 val DriverDirectMode_FrameTiming = struct(Module.OPENVR, "DriverDirectModeFrameTiming", nativeName = "DriverDirectMode_FrameTiming", mutable = false) {
@@ -818,6 +932,11 @@ val ImuSample_t = struct(Module.OPENVR, "ImuSample", nativeName = "ImuSample_t",
 	HmdVector3d_t("vAccel", "")
 	HmdVector3d_t("vGyro", "")
 	uint32_t("unOffScaleFlags", "")
+}
+
+val AppOverrideKeys_t = struct(Module.OPENVR, "AppOverrideKeys", nativeName = "AppOverrideKeys_t") {
+    charASCII.p("pchKey", "")
+    char.p("pchValue", "")
 }
 
 val VROverlayIntersectionParams_t = struct(Module.OPENVR, "VROverlayIntersectionParams", nativeName = "VROverlayIntersectionParams_t") {

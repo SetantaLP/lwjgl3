@@ -256,11 +256,11 @@ public class VRInput {
         return nVRInput_GetAnalogActionData(action, pActionData.address(), InputAnalogActionData.SIZEOF, ulRestrictToDevice);
     }
 
-    // --- [ VRInput_GetPoseActionData ] ---
+    // --- [ VRInput_GetPoseActionDataRelativeToNow ] ---
 
-    /** Unsafe version of: {@link #VRInput_GetPoseActionData GetPoseActionData} */
-    public static int nVRInput_GetPoseActionData(long action, int eOrigin, float fPredictedSecondsFromNow, long pActionData, int unActionDataSize, long ulRestrictToDevice) {
-        long __functionAddress = OpenVR.VRInput.GetPoseActionData;
+    /** Unsafe version of: {@link #VRInput_GetPoseActionDataRelativeToNow GetPoseActionDataRelativeToNow} */
+    public static int nVRInput_GetPoseActionDataRelativeToNow(long action, int eOrigin, float fPredictedSecondsFromNow, long pActionData, int unActionDataSize, long ulRestrictToDevice) {
+        long __functionAddress = OpenVR.VRInput.GetPoseActionDataRelativeToNow;
         if (CHECKS) {
             check(__functionAddress);
         }
@@ -268,23 +268,62 @@ public class VRInput {
     }
 
     /**
-     * Reads the state of a pose action given its handle.
+     * Reads the state of a pose action given its handle for the number of seconds relative to now.
+     * 
+     * <p>This will generally be called with negative times from the {@code fUpdateTime} fields in other actions.</p>
      *
      * @param eOrigin one of:<br><table><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseSeated}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseStanding}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated}</td></tr></table>
      */
     @NativeType("EVRInputError")
-    public static int VRInput_GetPoseActionData(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, float fPredictedSecondsFromNow, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("uint32_t") int unActionDataSize, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
-        return nVRInput_GetPoseActionData(action, eOrigin, fPredictedSecondsFromNow, pActionData.address(), unActionDataSize, ulRestrictToDevice);
+    public static int VRInput_GetPoseActionDataRelativeToNow(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, float fPredictedSecondsFromNow, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("uint32_t") int unActionDataSize, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
+        return nVRInput_GetPoseActionDataRelativeToNow(action, eOrigin, fPredictedSecondsFromNow, pActionData.address(), unActionDataSize, ulRestrictToDevice);
+    }
+
+    /**
+     * Reads the state of a pose action given its handle for the number of seconds relative to now.
+     * 
+     * <p>This will generally be called with negative times from the {@code fUpdateTime} fields in other actions.</p>
+     *
+     * @param eOrigin one of:<br><table><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseSeated}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseStanding}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated}</td></tr></table>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetPoseActionDataRelativeToNow(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, float fPredictedSecondsFromNow, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
+        return nVRInput_GetPoseActionDataRelativeToNow(action, eOrigin, fPredictedSecondsFromNow, pActionData.address(), InputPoseActionData.SIZEOF, ulRestrictToDevice);
+    }
+
+    // --- [ VRInput_GetPoseActionDataForNextFrame ] ---
+
+    /** Unsafe version of: {@link #VRInput_GetPoseActionDataForNextFrame GetPoseActionDataForNextFrame} */
+    public static int nVRInput_GetPoseActionDataForNextFrame(long action, int eOrigin, long pActionData, int unActionDataSize, long ulRestrictToDevice) {
+        long __functionAddress = OpenVR.VRInput.GetPoseActionDataForNextFrame;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callJPJI(action, eOrigin, pActionData, unActionDataSize, ulRestrictToDevice, __functionAddress);
     }
 
     /**
      * Reads the state of a pose action given its handle.
+     * 
+     * <p>The returned values will match the values returned by the last call to {@link VRCompositor#VRCompositor_WaitGetPoses WaitGetPoses}.</p>
      *
      * @param eOrigin one of:<br><table><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseSeated}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseStanding}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated}</td></tr></table>
      */
     @NativeType("EVRInputError")
-    public static int VRInput_GetPoseActionData(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, float fPredictedSecondsFromNow, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
-        return nVRInput_GetPoseActionData(action, eOrigin, fPredictedSecondsFromNow, pActionData.address(), InputPoseActionData.SIZEOF, ulRestrictToDevice);
+    public static int VRInput_GetPoseActionDataForNextFrame(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("uint32_t") int unActionDataSize, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
+        return nVRInput_GetPoseActionDataForNextFrame(action, eOrigin, pActionData.address(), unActionDataSize, ulRestrictToDevice);
+    }
+
+    /**
+     * Reads the state of a pose action given its handle.
+     * 
+     * <p>The returned values will match the values returned by the last call to {@link VRCompositor#VRCompositor_WaitGetPoses WaitGetPoses}.</p>
+     *
+     * @param eOrigin one of:<br><table><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseSeated}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseStanding}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated}</td></tr></table>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetPoseActionDataForNextFrame(@NativeType("VRActionHandle_t") long action, @NativeType("ETrackingUniverseOrigin") int eOrigin, @NativeType("InputPoseActionData_t *") InputPoseActionData pActionData, @NativeType("VRInputValueHandle_t") long ulRestrictToDevice) {
+        return nVRInput_GetPoseActionDataForNextFrame(action, eOrigin, pActionData.address(), InputPoseActionData.SIZEOF, ulRestrictToDevice);
     }
 
     // --- [ VRInput_GetSkeletalActionData ] ---
@@ -308,6 +347,47 @@ public class VRInput {
     @NativeType("EVRInputError")
     public static int VRInput_GetSkeletalActionData(@NativeType("VRActionHandle_t") long action, @NativeType("InputSkeletalActionData_t *") InputSkeletalActionData pActionData) {
         return nVRInput_GetSkeletalActionData(action, pActionData.address(), InputSkeletalActionData.SIZEOF);
+    }
+
+    // --- [ VRInput_GetDominantHand ] ---
+
+    /** Unsafe version of: {@link #VRInput_GetDominantHand GetDominantHand} */
+    public static int nVRInput_GetDominantHand(long peDominantHand) {
+        long __functionAddress = OpenVR.VRInput.GetDominantHand;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callPI(peDominantHand, __functionAddress);
+    }
+
+    /**
+     * Returns the current dominant hand for the user for this application.
+     * 
+     * <p>This function will only return success for applications which include {@code "supports_dominant_hand_setting": true} in their action manifests. The
+     * dominant hand will only change after a call to {@link #VRInput_UpdateActionState UpdateActionState}, and the action data returned after that point will use the new dominant hand.</p>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetDominantHand(@NativeType("ETrackedControllerRole *") IntBuffer peDominantHand) {
+        if (CHECKS) {
+            check(peDominantHand, 1);
+        }
+        return nVRInput_GetDominantHand(memAddress(peDominantHand));
+    }
+
+    // --- [ VRInput_SetDominantHand ] ---
+
+    /**
+     * Sets the dominant hand for the user for this application.
+     *
+     * @param eDominantHand one of:<br><table><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_Invalid}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_LeftHand}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_RightHand}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_OptOut}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_Treadmill}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_Stylus}</td></tr><tr><td>{@link VR#ETrackedControllerRole_TrackedControllerRole_Max}</td></tr></table>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_SetDominantHand(@NativeType("ETrackedControllerRole") int eDominantHand) {
+        long __functionAddress = OpenVR.VRInput.SetDominantHand;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callI(eDominantHand, __functionAddress);
     }
 
     // --- [ VRInput_GetBoneCount ] ---
@@ -431,18 +511,18 @@ public class VRInput {
     // --- [ VRInput_GetSkeletalSummaryData ] ---
 
     /** Unsafe version of: {@link #VRInput_GetSkeletalSummaryData GetSkeletalSummaryData} */
-    public static int nVRInput_GetSkeletalSummaryData(long action, long pSkeletalSummaryData) {
+    public static int nVRInput_GetSkeletalSummaryData(long action, int eSummaryType, long pSkeletalSummaryData) {
         long __functionAddress = OpenVR.VRInput.GetSkeletalSummaryData;
         if (CHECKS) {
             check(__functionAddress);
         }
-        return callJPI(action, pSkeletalSummaryData, __functionAddress);
+        return callJPI(action, eSummaryType, pSkeletalSummaryData, __functionAddress);
     }
 
     /** Reads summary information about the current pose of the skeleton associated with the given action. */
     @NativeType("EVRInputError")
-    public static int VRInput_GetSkeletalSummaryData(@NativeType("VRActionHandle_t") long action, @NativeType("VRSkeletalSummaryData_t *") VRSkeletalSummaryData pSkeletalSummaryData) {
-        return nVRInput_GetSkeletalSummaryData(action, pSkeletalSummaryData.address());
+    public static int VRInput_GetSkeletalSummaryData(@NativeType("VRActionHandle_t") long action, @NativeType("EVRSummaryType") int eSummaryType, @NativeType("VRSkeletalSummaryData_t *") VRSkeletalSummaryData pSkeletalSummaryData) {
+        return nVRInput_GetSkeletalSummaryData(action, eSummaryType, pSkeletalSummaryData.address());
     }
 
     // --- [ VRInput_GetSkeletalBoneDataCompressed ] ---
@@ -565,6 +645,26 @@ public class VRInput {
         return nVRInput_GetOriginTrackedDeviceInfo(origin, pOriginInfo.address(), InputOriginInfo.SIZEOF);
     }
 
+    // --- [ VRInput_GetActionBindingInfo ] ---
+
+    /** Unsafe version of: {@link #VRInput_GetActionBindingInfo GetActionBindingInfo} */
+    public static int nVRInput_GetActionBindingInfo(long action, long pOriginInfo, int unBindingInfoSize, int unBindingInfoCount, long punReturnedBindingInfoCount) {
+        long __functionAddress = OpenVR.VRInput.GetActionBindingInfo;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callJPPI(action, pOriginInfo, unBindingInfoSize, unBindingInfoCount, punReturnedBindingInfoCount, __functionAddress);
+    }
+
+    /** Retrieves useful information about the bindings for an action. */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetActionBindingInfo(@NativeType("VRActionHandle_t") long action, @NativeType("InputBindingInfo_t *") InputBindingInfo.Buffer pOriginInfo, @NativeType("uint32_t *") IntBuffer punReturnedBindingInfoCount) {
+        if (CHECKS) {
+            check(punReturnedBindingInfoCount, 1);
+        }
+        return nVRInput_GetActionBindingInfo(action, pOriginInfo.address(), InputBindingInfo.SIZEOF, pOriginInfo.remaining(), memAddress(punReturnedBindingInfoCount));
+    }
+
     // --- [ VRInput_ShowActionOrigins ] ---
 
     /** Shows the current binding for the action in-headset. */
@@ -592,6 +692,104 @@ public class VRInput {
     @NativeType("EVRInputError")
     public static int VRInput_ShowBindingsForActionSet(@NativeType("VRActiveActionSet_t *") VRActiveActionSet.Buffer pSets, @NativeType("uint32_t") int unSizeOfVRSelectedActionSet_t, @NativeType("VRInputValueHandle_t") long originToHighlight) {
         return nVRInput_ShowBindingsForActionSet(pSets.address(), unSizeOfVRSelectedActionSet_t, pSets.remaining(), originToHighlight);
+    }
+
+    // --- [ VRInput_GetComponentStateForBinding ] ---
+
+    /** Unsafe version of: {@link #VRInput_GetComponentStateForBinding GetComponentStateForBinding} */
+    public static int nVRInput_GetComponentStateForBinding(long pchRenderModelName, long pchComponentName, long pOriginInfo, int unBindingInfoSize, int unBindingInfoCount, long pComponentState) {
+        long __functionAddress = OpenVR.VRInput.GetComponentStateForBinding;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callPPPPI(pchRenderModelName, pchComponentName, pOriginInfo, unBindingInfoSize, unBindingInfoCount, pComponentState, __functionAddress);
+    }
+
+    /** Use this to query what action on the component returned by {@link #VRInput_GetOriginTrackedDeviceInfo GetOriginTrackedDeviceInfo} would trigger this binding. */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetComponentStateForBinding(@NativeType("char const *") ByteBuffer pchRenderModelName, @NativeType("char const *") ByteBuffer pchComponentName, @NativeType("InputBindingInfo_t const *") InputBindingInfo.Buffer pOriginInfo, @NativeType("RenderModel_ComponentState_t *") RenderModelComponentState.Buffer pComponentState) {
+        if (CHECKS) {
+            checkNT1(pchRenderModelName);
+            checkNT1(pchComponentName);
+            check(pComponentState, 1);
+        }
+        return nVRInput_GetComponentStateForBinding(memAddress(pchRenderModelName), memAddress(pchComponentName), pOriginInfo.address(), InputBindingInfo.SIZEOF, pOriginInfo.remaining(), pComponentState.address());
+    }
+
+    /** Use this to query what action on the component returned by {@link #VRInput_GetOriginTrackedDeviceInfo GetOriginTrackedDeviceInfo} would trigger this binding. */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetComponentStateForBinding(@NativeType("char const *") CharSequence pchRenderModelName, @NativeType("char const *") CharSequence pchComponentName, @NativeType("InputBindingInfo_t const *") InputBindingInfo.Buffer pOriginInfo, @NativeType("RenderModel_ComponentState_t *") RenderModelComponentState.Buffer pComponentState) {
+        if (CHECKS) {
+            check(pComponentState, 1);
+        }
+        MemoryStack stack = stackGet(); int stackPointer = stack.getPointer();
+        try {
+            stack.nASCII(pchRenderModelName, true);
+            long pchRenderModelNameEncoded = stack.getPointerAddress();
+            stack.nASCII(pchComponentName, true);
+            long pchComponentNameEncoded = stack.getPointerAddress();
+            return nVRInput_GetComponentStateForBinding(pchRenderModelNameEncoded, pchComponentNameEncoded, pOriginInfo.address(), InputBindingInfo.SIZEOF, pOriginInfo.remaining(), pComponentState.address());
+        } finally {
+            stack.setPointer(stackPointer);
+        }
+    }
+
+    // --- [ VRInput_OpenBindingUI ] ---
+
+    /** Unsafe version of: {@link #VRInput_OpenBindingUI OpenBindingUI} */
+    public static int nVRInput_OpenBindingUI(long pchAppKey, long ulActionSetHandle, long ulDeviceHandle, boolean bShowOnDesktop) {
+        long __functionAddress = OpenVR.VRInput.OpenBindingUI;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callPJJI(pchAppKey, ulActionSetHandle, ulDeviceHandle, bShowOnDesktop, __functionAddress);
+    }
+
+    /**
+     * Opens the binding user interface.
+     * 
+     * <p>If no app key is provided it will use the key from the calling process. If no set is provided it will open to the root of the app binding page.</p>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_OpenBindingUI(@NativeType("char const *") ByteBuffer pchAppKey, @NativeType("VRActionSetHandle_t") long ulActionSetHandle, @NativeType("VRInputValueHandle_t") long ulDeviceHandle, @NativeType("bool") boolean bShowOnDesktop) {
+        if (CHECKS) {
+            checkNT1(pchAppKey);
+        }
+        return nVRInput_OpenBindingUI(memAddress(pchAppKey), ulActionSetHandle, ulDeviceHandle, bShowOnDesktop);
+    }
+
+    /**
+     * Opens the binding user interface.
+     * 
+     * <p>If no app key is provided it will use the key from the calling process. If no set is provided it will open to the root of the app binding page.</p>
+     */
+    @NativeType("EVRInputError")
+    public static int VRInput_OpenBindingUI(@NativeType("char const *") CharSequence pchAppKey, @NativeType("VRActionSetHandle_t") long ulActionSetHandle, @NativeType("VRInputValueHandle_t") long ulDeviceHandle, @NativeType("bool") boolean bShowOnDesktop) {
+        MemoryStack stack = stackGet(); int stackPointer = stack.getPointer();
+        try {
+            stack.nASCII(pchAppKey, true);
+            long pchAppKeyEncoded = stack.getPointerAddress();
+            return nVRInput_OpenBindingUI(pchAppKeyEncoded, ulActionSetHandle, ulDeviceHandle, bShowOnDesktop);
+        } finally {
+            stack.setPointer(stackPointer);
+        }
+    }
+
+    // --- [ VRInput_GetBindingVariant ] ---
+
+    /** Unsafe version of: {@link #VRInput_GetBindingVariant GetBindingVariant} */
+    public static int nVRInput_GetBindingVariant(long ulDevicePath, long pchVariantArray, int unVariantArraySize) {
+        long __functionAddress = OpenVR.VRInput.GetBindingVariant;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        return callJPI(ulDevicePath, pchVariantArray, unVariantArraySize, __functionAddress);
+    }
+
+    /** Returns the variant set in the current bindings. If the binding doesn't include a variant setting, this function will return an empty string. */
+    @NativeType("EVRInputError")
+    public static int VRInput_GetBindingVariant(@NativeType("VRInputValueHandle_t") long ulDevicePath, @NativeType("char *") ByteBuffer pchVariantArray) {
+        return nVRInput_GetBindingVariant(ulDevicePath, memAddress(pchVariantArray), pchVariantArray.remaining());
     }
 
 }

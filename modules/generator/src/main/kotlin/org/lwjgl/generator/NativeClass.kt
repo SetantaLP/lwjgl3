@@ -5,8 +5,8 @@
 package org.lwjgl.generator
 
 import java.io.*
-import java.lang.Math.*
 import java.nio.file.*
+import kotlin.math.*
 
 const val EXT_FLAG = ""
 
@@ -205,7 +205,7 @@ class NativeClass internal constructor(
     private val customMethods = ArrayList<String>()
 
     internal val hasBody
-        get() = binding is SimpleBinding || !constantBlocks.isEmpty() || hasNativeFunctions || customMethods.isNotEmpty()
+        get() = binding is SimpleBinding || constantBlocks.isNotEmpty() || hasNativeFunctions || customMethods.isNotEmpty()
 
     val hasNativeFunctions
         get() = _functions.isNotEmpty()
@@ -438,7 +438,7 @@ class NativeClass internal constructor(
                 }
                 if (functions.any {
                     it.returns.nativeType.needsCustomBuffer() || it.hasParam { param ->
-                        param.nativeType.needsCustomBuffer() || (param.has<MultiType>() && param.get<MultiType>().types.run { contains(PointerMapping.DATA_POINTER) || contains(PointerMapping.DATA_CLONG) })
+                        param.nativeType.needsCustomBuffer() || param.has<MultiType> { types.contains(PointerMapping.DATA_POINTER) || types.contains(PointerMapping.DATA_CLONG) }
                     }
                 })
                     println("import org.lwjgl.*;\n")
@@ -489,7 +489,7 @@ class NativeClass internal constructor(
                 println("import static org.lwjgl.system.MemoryUtil.*;")
                 if (functions.any { func ->
                     func.hasParam {
-                        it.has<MultiType>() && it.get<MultiType>().types.contains(PointerMapping.DATA_POINTER) && func.hasAutoSizeFor(it)
+                        it.has<MultiType> { types.contains(PointerMapping.DATA_POINTER) } && func.hasAutoSizeFor(it)
                     }
                 })
                     println("import static org.lwjgl.system.Pointer.*;")
@@ -786,7 +786,7 @@ class NativeClass internal constructor(
         val overload = name.indexOf('@').let { if (it == -1) name else name.substring(0, it) }
         val func = Func(
             returns = returns,
-            simpleName = overload,
+            simpleName = if (noPrefix || (overload[0].isJavaIdentifierStart() && !JAVA_KEYWORDS.contains(overload))) overload else "$prefixMethod$overload",
             name = if (noPrefix) overload else "$prefixMethod$overload",
             documentation = { parameterFilter ->
                 this@NativeClass.toJavaDoc(
@@ -802,8 +802,8 @@ class NativeClass internal constructor(
             parameters = *params
         )
 
-        if ((_functions.put(name, func)) != null) {
-            throw IllegalArgumentException("The $name function is already defined in ${this@NativeClass.className}.")
+        require(_functions.put(name, func) == null) {
+            "The $name function is already defined in ${this@NativeClass.className}."
         }
         return func
     }

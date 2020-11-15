@@ -92,12 +92,31 @@ val VRInput = "VRInput".nativeClass(
     )
 
     EVRInputError(
-        "GetPoseActionData",
-        "Reads the state of a pose action given its handle.",
+        "GetPoseActionDataRelativeToNow",
+        """
+        Reads the state of a pose action given its handle for the number of seconds relative to now.
+        
+        This will generally be called with negative times from the {@code fUpdateTime} fields in other actions.
+        """,
 
         VRActionHandle_t("action", ""),
         ETrackingUniverseOrigin("eOrigin", "", "ETrackingUniverseOrigin_\\w+"),
         float("fPredictedSecondsFromNow", ""),
+        InputPoseActionData_t.p("pActionData", ""),
+        Expression("InputPoseActionData.SIZEOF")..uint32_t("unActionDataSize", ""),
+        VRInputValueHandle_t("ulRestrictToDevice", "")
+    )
+
+    EVRInputError(
+        "GetPoseActionDataForNextFrame",
+        """
+        Reads the state of a pose action given its handle.
+
+        The returned values will match the values returned by the last call to #WaitGetPoses().
+        """,
+
+        VRActionHandle_t("action", ""),
+        ETrackingUniverseOrigin("eOrigin", "", "ETrackingUniverseOrigin_\\w+"),
         InputPoseActionData_t.p("pActionData", ""),
         Expression("InputPoseActionData.SIZEOF")..uint32_t("unActionDataSize", ""),
         VRInputValueHandle_t("ulRestrictToDevice", "")
@@ -111,6 +130,25 @@ val VRInput = "VRInput".nativeClass(
         InputSkeletalActionData_t.p("pActionData", ""),
         Expression("InputSkeletalActionData.SIZEOF")..uint32_t("unActionDataSize", "")
     )
+
+    EVRInputError(
+        "GetDominantHand",
+        """
+        Returns the current dominant hand for the user for this application.
+
+        This function will only return success for applications which include {@code "supports_dominant_hand_setting": true} in their action manifests. The
+        dominant hand will only change after a call to #UpdateActionState(), and the action data returned after that point will use the new dominant hand.
+        """,
+
+        Check(1)..ETrackedControllerRole.p("peDominantHand", "")
+    )
+
+    EVRInputError(
+        "SetDominantHand",
+        "Sets the dominant hand for the user for this application.",
+
+        ETrackedControllerRole("eDominantHand", "", "ETrackedControllerRole_\\w+")
+    );
 
     EVRInputError(
         "GetBoneCount",
@@ -174,6 +212,7 @@ val VRInput = "VRInput".nativeClass(
         "Reads summary information about the current pose of the skeleton associated with the given action.",
 
         VRActionHandle_t("action", ""),
+        EVRSummaryType("eSummaryType", ""),
         VRSkeletalSummaryData_t.p("pSkeletalSummaryData", "")
     )
 
@@ -251,6 +290,17 @@ val VRInput = "VRInput".nativeClass(
     )
 
     EVRInputError(
+        "GetActionBindingInfo",
+        "Retrieves useful information about the bindings for an action.",
+
+        VRActionHandle_t("action", ""),
+        InputBindingInfo_t.p("pOriginInfo", ""),
+        Expression("InputBindingInfo.SIZEOF")..uint32_t("unBindingInfoSize", ""),
+        AutoSize("pOriginInfo")..uint32_t("unBindingInfoCount", ""),
+        Check(1)..uint32_t.p("punReturnedBindingInfoCount", "")
+    )
+
+    EVRInputError(
         "ShowActionOrigins",
         "Shows the current binding for the action in-headset.",
 
@@ -268,8 +318,43 @@ val VRInput = "VRInput".nativeClass(
         VRInputValueHandle_t("originToHighlight", "")
     )
 
+    EVRInputError(
+        "GetComponentStateForBinding",
+        "Use this to query what action on the component returned by #GetOriginTrackedDeviceInfo() would trigger this binding.",
+
+        charASCII.const.p("pchRenderModelName", ""),
+        charASCII.const.p("pchComponentName", ""),
+        InputBindingInfo_t.const.p("pOriginInfo", ""),
+        Expression("InputBindingInfo.SIZEOF")..uint32_t("unBindingInfoSize", ""),
+        AutoSize("pOriginInfo")..uint32_t("unBindingInfoCount", ""),
+        Check(1)..RenderModel_ComponentState_t.p("pComponentState", "")
+    )
+
     bool(
         "IsUsingLegacyInput",
         ""
+    )
+
+    EVRInputError(
+        "OpenBindingUI",
+        """
+        Opens the binding user interface.
+
+        If no app key is provided it will use the key from the calling process. If no set is provided it will open to the root of the app binding page.
+        """,
+
+        charASCII.const.p("pchAppKey", ""),
+        VRActionSetHandle_t("ulActionSetHandle", ""),
+        VRInputValueHandle_t("ulDeviceHandle", ""),
+        bool("bShowOnDesktop", "")
+    )
+
+    EVRInputError(
+        "GetBindingVariant",
+        "Returns the variant set in the current bindings. If the binding doesn't include a variant setting, this function will return an empty string.",
+
+        VRInputValueHandle_t("ulDevicePath", ""),
+        charASCII.p("pchVariantArray", ""),
+        AutoSize("pchVariantArray")..uint32_t("unVariantArraySize", "")
     )
 }

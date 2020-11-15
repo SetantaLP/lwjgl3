@@ -24,7 +24,7 @@ import static org.lwjgl.system.MemoryStack.*;
  * <ul>
  * <li>{@code unPacketNum} &ndash; If packet num matches that on your prior call, then the controller state hasn't been changed since your last call and there is no need to process it.</li>
  * <li>{@code ulButtonPressed} &ndash; bit flags for each of the buttons. Use {@code ButtonMaskFromId} to turn an ID into a mask</li>
- * <li>{@code rAxis} &ndash; axis data for the controller's analog inputs</li>
+ * <li>{@code rAxis[5]} &ndash; axis data for the controller's analog inputs</li>
  * </ul>
  * 
  * <h3>Layout</h3>
@@ -109,6 +109,10 @@ public class VRControllerState extends Struct implements NativeResource {
     public VRControllerState rAxis(@NativeType("VRControllerAxis_t[5]") VRControllerAxis.Buffer value) { nrAxis(address(), value); return this; }
     /** Copies the specified {@link VRControllerAxis} at the specified index of the {@code rAxis} field. */
     public VRControllerState rAxis(int index, @NativeType("VRControllerAxis_t") VRControllerAxis value) { nrAxis(address(), index, value); return this; }
+    /** Passes the {@code rAxis} field to the specified {@link java.util.function.Consumer Consumer}. */
+    public VRControllerState rAxis(java.util.function.Consumer<VRControllerAxis.Buffer> consumer) { consumer.accept(rAxis()); return this; }
+    /** Passes the element at {@code index} of the {@code rAxis} field to the specified {@link java.util.function.Consumer Consumer}. */
+    public VRControllerState rAxis(int index, java.util.function.Consumer<VRControllerAxis> consumer) { consumer.accept(rAxis(index)); return this; }
 
     /** Initializes this struct with the specified values. */
     public VRControllerState set(
@@ -373,6 +377,10 @@ public class VRControllerState extends Struct implements NativeResource {
         public VRControllerState.Buffer rAxis(@NativeType("VRControllerAxis_t[5]") VRControllerAxis.Buffer value) { VRControllerState.nrAxis(address(), value); return this; }
         /** Copies the specified {@link VRControllerAxis} at the specified index of the {@code rAxis} field. */
         public VRControllerState.Buffer rAxis(int index, @NativeType("VRControllerAxis_t") VRControllerAxis value) { VRControllerState.nrAxis(address(), index, value); return this; }
+        /** Passes the {@code rAxis} field to the specified {@link java.util.function.Consumer Consumer}. */
+        public VRControllerState.Buffer rAxis(java.util.function.Consumer<VRControllerAxis.Buffer> consumer) { consumer.accept(rAxis()); return this; }
+        /** Passes the element at {@code index} of the {@code rAxis} field to the specified {@link java.util.function.Consumer Consumer}. */
+        public VRControllerState.Buffer rAxis(int index, java.util.function.Consumer<VRControllerAxis> consumer) { consumer.accept(rAxis(index)); return this; }
 
     }
 

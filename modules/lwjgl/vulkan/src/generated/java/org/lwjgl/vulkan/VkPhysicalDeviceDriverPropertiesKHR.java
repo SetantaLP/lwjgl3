@@ -40,8 +40,8 @@ import static org.lwjgl.vulkan.KHRDriverProperties.*;
  * <li>{@code sType} &ndash; the type of this structure.</li>
  * <li>{@code pNext} &ndash; {@code NULL} or a pointer to an extension specific structure.</li>
  * <li>{@code driverID} &ndash; a unique identifier for the driver of the physical device.</li>
- * <li>{@code driverName} &ndash; a null-terminated UTF-8 string containing the name of the driver.</li>
- * <li>{@code driverInfo} &ndash; a null-terminated UTF-8 string containing additional information about the driver.</li>
+ * <li>{@code driverName[VK_MAX_DRIVER_NAME_SIZE_KHR]} &ndash; a null-terminated UTF-8 string containing the name of the driver.</li>
+ * <li>{@code driverInfo[VK_MAX_DRIVER_INFO_SIZE_KHR]} &ndash; a null-terminated UTF-8 string containing additional information about the driver.</li>
  * <li>{@code conformanceVersion} &ndash; the version of the Vulkan conformance test this driver is conformant against (see {@link VkConformanceVersionKHR}).</li>
  * </ul>
  * 
@@ -131,8 +131,6 @@ public class VkPhysicalDeviceDriverPropertiesKHR extends Struct implements Nativ
     public String driverInfoString() { return ndriverInfoString(address()); }
     /** Returns a {@link VkConformanceVersionKHR} view of the {@code conformanceVersion} field. */
     public VkConformanceVersionKHR conformanceVersion() { return nconformanceVersion(address()); }
-    /** Passes the {@code conformanceVersion} field to the specified {@link java.util.function.Consumer Consumer}. */
-    public VkPhysicalDeviceDriverPropertiesKHR conformanceVersion(java.util.function.Consumer<VkConformanceVersionKHR> consumer) { consumer.accept(conformanceVersion()); return this; }
 
     /** Sets the specified value to the {@code sType} field. */
     public VkPhysicalDeviceDriverPropertiesKHR sType(@NativeType("VkStructureType") int value) { nsType(address(), value); return this; }
@@ -388,8 +386,6 @@ public class VkPhysicalDeviceDriverPropertiesKHR extends Struct implements Nativ
         public String driverInfoString() { return VkPhysicalDeviceDriverPropertiesKHR.ndriverInfoString(address()); }
         /** Returns a {@link VkConformanceVersionKHR} view of the {@code conformanceVersion} field. */
         public VkConformanceVersionKHR conformanceVersion() { return VkPhysicalDeviceDriverPropertiesKHR.nconformanceVersion(address()); }
-        /** Passes the {@code conformanceVersion} field to the specified {@link java.util.function.Consumer Consumer}. */
-        public VkPhysicalDeviceDriverPropertiesKHR.Buffer conformanceVersion(java.util.function.Consumer<VkConformanceVersionKHR> consumer) { consumer.accept(conformanceVersion()); return this; }
 
         /** Sets the specified value to the {@code sType} field. */
         public VkPhysicalDeviceDriverPropertiesKHR.Buffer sType(@NativeType("VkStructureType") int value) { VkPhysicalDeviceDriverPropertiesKHR.nsType(address(), value); return this; }

@@ -201,7 +201,11 @@ public class VRChaperoneSetup {
         callPV(pQuadsBuffer, unQuadsCount, __functionAddress);
     }
 
-    /** Sets the Collision Bounds in the working copy. */
+    /**
+     * Sets the Collision Bounds in the working copy.
+     * 
+     * <p>Note: ceiling height is ignored.</p>
+     */
     public static void VRChaperoneSetup_SetWorkingCollisionBoundsInfo(@NativeType("HmdQuad_t *") HmdQuad.Buffer pQuadsBuffer) {
         nVRChaperoneSetup_SetWorkingCollisionBoundsInfo(pQuadsBuffer.address(), pQuadsBuffer.remaining());
     }
@@ -336,6 +340,22 @@ public class VRChaperoneSetup {
     /** Hides the chaperone data in the working set to preview in the compositor (if it was visible). */
     public static void VRChaperoneSetup_HideWorkingSetPreview() {
         long __functionAddress = OpenVR.VRChaperoneSetup.HideWorkingSetPreview;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        callV(__functionAddress);
+    }
+
+    // --- [ VRChaperoneSetup_RoomSetupStarting ] ---
+
+    /**
+     * Fires an event that the tracking system can use to know room setup is about to begin.
+     * 
+     * <p>This lets the tracking system make any last minute adjustments that should be incorporated into the new setup. If the user is adjusting live in HMD
+     * using a tweak tool, keep in mind that calling this might cause the user to see the room jump.</p>
+     */
+    public static void VRChaperoneSetup_RoomSetupStarting() {
+        long __functionAddress = OpenVR.VRChaperoneSetup.RoomSetupStarting;
         if (CHECKS) {
             check(__functionAddress);
         }

@@ -88,6 +88,7 @@ open class IntegerType(name: String, mapping: PrimitiveMapping, val unsigned: Bo
     override val const by lazy { IntegerType(this.name.const, this.mapping, unsigned) }
 }
 val String.enumType get() = IntegerType(this, PrimitiveMapping.INT)
+fun String.enumType(type: IntegerType) = typedef(type, this)
 
 // Specialization for string characters.
 class CharType(name: String, mapping: CharMapping) : PrimitiveType(name, mapping) {
@@ -111,6 +112,7 @@ class CArrayType<T : DataType> internal constructor(
     override val const: NativeType get() { throw UnsupportedOperationException() }
 
     val size: String get() = dimensions.joinToString(" * ")
+    val def: String get() = dimensions.joinToString("") { "[$it]" }
 }
 operator fun <T : DataType> T.get(size: Int) = this[size.toString()]
 operator fun <T : DataType> T.get(size: String) = CArrayType(this.name, this, arrayOf(size))
@@ -325,7 +327,7 @@ open class PointerMapping private constructor(
     internal val supportsArrayOverload: Boolean = false
 ) : TypeMapping("jlong", Long::class, javaMethodType) {
 
-    private constructor(javaMethodType: KClass<*>, byteShift: Int) : this(javaMethodType, Integer.toString(byteShift), byteShift != 0)
+    private constructor(javaMethodType: KClass<*>, byteShift: Int) : this(javaMethodType, byteShift.toString(), byteShift != 0)
 
     companion object {
         internal val OPAQUE_POINTER = PointerMapping(Long::class, "POINTER_SHIFT")
@@ -342,7 +344,7 @@ open class PointerMapping private constructor(
         val DATA_DOUBLE = PointerMapping(DoubleBuffer::class, 3)
     }
 
-    internal val isMultiByte get() = this !== PointerMapping.OPAQUE_POINTER && byteShift != "0"
+    internal val isMultiByte get() = this !== OPAQUE_POINTER && byteShift != "0"
 
     internal val box = super.javaMethodName.substringBefore("Buffer")
     internal val primitive get() = when (this) {
@@ -393,12 +395,15 @@ internal val NativeType.jniSignatureStrict
         else                -> "L${this.mapping.nativeMethodType.name};"
     }
 internal val NativeType.jniSignature
-    get() = if (mapping.nativeMethodType === Long::class.java && mapping !== PrimitiveMapping.LONG) "P" else jniSignatureStrict
+    get() = if (mapping.nativeMethodType === Long::class.java && mapping !== PrimitiveMapping.LONG)
+        if (mapping === PrimitiveMapping.CLONG) "N" else "P"
+    else
+        jniSignatureStrict
 internal val NativeType.jniSignatureJava
     get() = if (mapping.nativeMethodType === Long::class.java)
         when (mapping) {
             PrimitiveMapping.LONG  -> "J"
-            PrimitiveMapping.CLONG -> "C"
+            PrimitiveMapping.CLONG -> "N"
             else                   -> "P"
         }
     else
@@ -407,11 +412,7 @@ internal val NativeType.jniSignatureJava
 internal fun NativeType.annotation(type: String) = if (type == name)
     null
 else
-    "@NativeType(\"$name${if (this !is CArrayType<*>) "" else this
-        .dimensions
-        .joinToString("") {
-            "[$it]"
-        }
+    "@NativeType(\"$name${if (this !is CArrayType<*>) "" else this.def
     }\")"
 internal fun NativeType.annotate(type: String) = annotation(type).let {
     if (it == null)

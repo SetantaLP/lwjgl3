@@ -29,6 +29,33 @@ typedef struct HmdColor_t
 
     documentation = "Allows the application to interact with the compositor."
 
+/*
+/** Compositor frame timing reprojection flags. */
+const uint32_t VRCompositor_ReprojectionReason_Cpu = 0x01;
+const uint32_t VRCompositor_ReprojectionReason_Gpu = 0x02;
+const uint32_t VRCompositor_ReprojectionAsync = 0x04;	// This flag indicates the async reprojection mode is active,
+															// but does not indicate if reprojection actually happened or not.
+															// Use the ReprojectionReason flags above to check if reprojection
+															// was actually applied (i.e. scene texture was reused).
+															// NumFramePresents > 1 also indicates the scene texture was reused,
+															// and also the number of times that it was presented in total.
+
+const uint32_t VRCompositor_ReprojectionMotion = 0x08;	// This flag indicates whether or not motion smoothing was triggered for this frame
+
+const uint32_t VRCompositor_PredictionMask = 0x30;	// The runtime may predict more than one frame (up to four) ahead if
+															// it detects the application is taking too long to render. These two
+															// bits will contain the count of additional frames (normally zero).
+															// Use the VR_COMPOSITOR_ADDITIONAL_PREDICTED_FRAMES macro to read from
+															// the latest frame timing entry.
+
+const uint32_t VRCompositor_ThrottleMask = 0xC0;	// Number of frames the compositor is throttling the application.
+															// Use the VR_COMPOSITOR_NUMBER_OF_THROTTLED_FRAMES macro to read from
+															// the latest frame timing entry.
+
+#define VR_COMPOSITOR_ADDITIONAL_PREDICTED_FRAMES( timing ) ( ( ( timing ).m_nReprojectionFlags & vr::VRCompositor_PredictionMask ) >> 4 )
+#define VR_COMPOSITOR_NUMBER_OF_THROTTLED_FRAMES( timing ) ( ( ( timing ).m_nReprojectionFlags & vr::VRCompositor_ThrottleMask ) >> 6 )
+ */
+
     void(
         "SetTrackingSpace",
         "Sets tracking space returned by #WaitGetPoses().",
@@ -277,19 +304,19 @@ typedef struct HmdColor_t
 
     void(
         "ShowMirrorWindow",
-        "Creates a window on the primary monitor to display what is being shown in the headset.",
+        "DEPRECATED: Opens the headset view (as either a window or docked widget depending on user's preferences) that displays what the user sees in the headset.",
         void()
     )
 
     void(
         "HideMirrorWindow",
-        "Closes the mirror window.",
+        "DEPRECATED: Closes the headset view, either as a window or docked widget.",
         void()
     )
 
     bool(
         "IsMirrorWindowVisible",
-        "Returns true if the mirror window is shown.",
+        "DEPRECATED: Returns true if the headset view (either as a window or docked widget) is shown.",
         void()
     )
 
@@ -453,5 +480,76 @@ typedef struct HmdColor_t
         """,
 
         void()
+    )
+
+    bool(
+        "IsMotionSmoothingSupported",
+        "Indicates whether or not motion smoothing is supported by the current hardware.",
+
+        void()
+    )
+
+    bool(
+        "IsCurrentSceneFocusAppLoading",
+        """
+        Indicates whether or not the current scene focus app is currently loading.
+        
+        This is inferred from its use of {@code FadeGrid} to explicitly fade to the compositor to cover up the fact that it cannot render at a sustained full
+        framerate during this time.
+        """,
+
+        void()
+    )
+
+    EVRCompositorError(
+        "SetStageOverride_Async",
+        """
+        Override the stage model used in the compositor to replace the grid.
+
+        {@code RenderModelPath} is a full path the an OBJ file to load. This file will be loaded asynchronously from disk and uploaded to the gpu by the
+        runtime. Once ready for rendering, the VREvent #EVREventType_VREvent_Compositor_StageOverrideReady will be sent. Use {@code FadeToGrid} to reveal. Call
+        #ClearStageOverride() to free the associated resources when finished.
+        """,
+
+        charASCII.const.p("pchRenderModelPath", ""),
+        HmdMatrix34_t.const.p("pTransform", ""),
+        Compositor_StageRenderSettings.const.p("pRenderSettings", ""),
+        Expression("CompositorStageRenderSettings.SIZEOF")..uint32_t("nSizeOfRenderSettings", "")
+    )
+
+    void(
+        "ClearStageOverride",
+        "Resets the stage to its default user specified setting.",
+
+        void()
+    )
+
+    bool(
+        "GetCompositorBenchmarkResults",
+        "Returns true if {@code pBenchmarkResults} is filled it. Sets {@code pBenchmarkResults} with the result of the compositor benchmark.",
+
+        Compositor_BenchmarkResults.p("pBenchmarkResults", ""),
+        AutoSize("pBenchmarkResults")..uint32_t("nSizeOfBenchmarkResults", "should be set to {@code sizeof(Compositor_BenchmarkResults)}")
+    )
+
+    EVRCompositorError(
+        "GetLastPosePredictionIDs",
+        """
+        Returns the frame id associated with the poses last returned by #WaitGetPoses().
+
+        Deltas between IDs correspond to number of headset vsync intervals.
+        """,
+
+        Check(1)..uint32_t.p("pRenderPosePredictionID", ""),
+        Check(1)..uint32_t.p("pGamePosePredictionID", "")
+    )
+
+    EVRCompositorError(
+        "GetPosesForFrame",
+        "Get the most up-to-date predicted (or recorded - up to 100ms old) set of poses for a given frame id.",
+
+        uint32_t("unPosePredictionID", ""),
+        TrackedDevicePose_t.p("pPoseArray", ""),
+        AutoSize("pPoseArray")..uint32_t("unPoseArrayCount", "")
     )
 }

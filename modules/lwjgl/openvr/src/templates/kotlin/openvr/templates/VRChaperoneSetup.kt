@@ -98,7 +98,11 @@ val VRChaperoneSetup = "VRChaperoneSetup".nativeClass(
 
     void(
         "SetWorkingCollisionBoundsInfo",
-        "Sets the Collision Bounds in the working copy.",
+        """
+        Sets the Collision Bounds in the working copy.
+        
+        Note: ceiling height is ignored.
+        """,
 
         HmdQuad_t.p("pQuadsBuffer", ""),
         AutoSize("pQuadsBuffer")..uint32_t("unQuadsCount", "")
@@ -158,4 +162,15 @@ val VRChaperoneSetup = "VRChaperoneSetup".nativeClass(
 
     void("ShowWorkingSetPreview", "Shows the chaperone data in the working set to preview in the compositor.", void())
     void("HideWorkingSetPreview", "Hides the chaperone data in the working set to preview in the compositor (if it was visible).", void())
+    void(
+        "RoomSetupStarting",
+        """
+        Fires an event that the tracking system can use to know room setup is about to begin.
+        
+        This lets the tracking system make any last minute adjustments that should be incorporated into the new setup. If the user is adjusting live in HMD
+        using a tweak tool, keep in mind that calling this might cause the user to see the room jump.
+        """,
+
+        void()
+    )
 }

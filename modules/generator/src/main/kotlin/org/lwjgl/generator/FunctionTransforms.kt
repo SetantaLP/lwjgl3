@@ -273,18 +273,22 @@ internal class VectorValueTransform(
     }
 }
 
-// TODO: remove in a future version?
-internal class MapPointerTransform(val expression: String) : FunctionTransform<ReturnValue> {
-    override fun transformDeclaration(param: ReturnValue, original: String) = "ByteBuffer" // Return a ByteBuffer
+// TODO: remove old_buffer in LWJGL 4
+internal class MapPointerTransform(val expression: String, val useOldBuffer: Boolean) : FunctionTransform<ReturnValue> {
+    override fun transformDeclaration(param: ReturnValue, original: String) = if (param.nativeType.dereference is StructType) "$original.Buffer" else original
     override fun transformCall(param: ReturnValue, original: String) = """int $MAP_LENGTH = $expression;
-        return apiGetMappedBuffer($MAP_OLD, $RESULT, $MAP_LENGTH);"""
+        return ${getMapPointerExpression(param, MAP_LENGTH, useOldBuffer)};"""
 }
 
-internal class MapPointerExplicitTransform(val lengthParam: String, val addParam: Boolean = true) : FunctionTransform<ReturnValue> {
-    override fun transformDeclaration(param: ReturnValue, original: String) = "ByteBuffer" // Return a ByteBuffer
-    override fun transformCall(param: ReturnValue, original: String) =
-        "apiGetMappedBuffer($MAP_OLD, $RESULT, (int)$lengthParam)"
+internal class MapPointerExplicitTransform(val lengthParam: String, val useOldBuffer: Boolean, val addParam: Boolean = true) : FunctionTransform<ReturnValue> {
+    override fun transformDeclaration(param: ReturnValue, original: String) = if (param.nativeType.dereference is StructType) "$original.Buffer" else original
+    override fun transformCall(param: ReturnValue, original: String) = getMapPointerExpression(param, "(int)$lengthParam", useOldBuffer)
 }
+private fun getMapPointerExpression(param: ReturnValue, lengthExpression: String, useOldBuffer: Boolean) =
+    if (useOldBuffer)
+        "apiGetMappedBuffer($MAP_OLD, $RESULT, $lengthExpression)"
+    else
+        "${param.nativeType.dereference.let { if (it is StructType) "${it.javaMethodType}.create" else "mem${param.nativeType.javaMethodType}" }}Safe($RESULT, $lengthExpression)"
 
 internal val BufferLengthTransform: FunctionTransform<Parameter> = object : FunctionTransform<Parameter>, StackFunctionTransform<Parameter>, SkipCheckFunctionTransform {
     override fun transformDeclaration(param: Parameter, original: String): String? = null // Remove the parameter

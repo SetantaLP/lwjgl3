@@ -13,7 +13,6 @@ import javax.annotation.*;
 import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.function.*;
 
 import static java.lang.Character.*;
 import static java.lang.Math.*;
@@ -83,6 +82,7 @@ public final class MemoryUtil {
     private static final long POSITION;
     private static final long LIMIT;
     private static final long CAPACITY;
+
     private static final long ADDRESS;
 
     private static final long PARENT_BYTE;
@@ -110,30 +110,27 @@ public final class MemoryUtil {
         UNSAFE = getUnsafeInstance();
 
         try {
-            ADDRESS = getAddressOffset();
             MARK = getMarkOffset();
             POSITION = getPositionOffset();
             LIMIT = getLimitOffset();
             CAPACITY = getCapacityOffset();
 
+            ADDRESS = getAddressOffset();
+
             int oopSize = UNSAFE.arrayIndexScale(Object[].class);
 
-            PARENT_BYTE = getParentOffset(oopSize, bb, it -> it.duplicate().order(it.order()));
-            PARENT_SHORT = getParentOffset(oopSize, bb.asShortBuffer(), ShortBuffer::duplicate);
-            PARENT_CHAR = getParentOffset(oopSize, bb.asCharBuffer(), CharBuffer::duplicate);
-            PARENT_INT = getParentOffset(oopSize, bb.asIntBuffer(), IntBuffer::duplicate);
-            PARENT_LONG = getParentOffset(oopSize, bb.asLongBuffer(), LongBuffer::duplicate);
-            PARENT_FLOAT = getParentOffset(oopSize, bb.asFloatBuffer(), FloatBuffer::duplicate);
-            PARENT_DOUBLE = getParentOffset(oopSize, bb.asDoubleBuffer(), DoubleBuffer::duplicate);
+            long offset = (max(max(max(MARK, POSITION), LIMIT), CAPACITY) + 4 + (oopSize - 1)) & ~Integer.toUnsignedLong(oopSize - 1);
+            long a      = memAddress(bb);
+
+            PARENT_BYTE = getParentOffset(offset, oopSize, bb, bb.duplicate().order(bb.order()));
+            PARENT_SHORT = getParentOffset(offset, oopSize, memShortBuffer(a, 0), bb.asShortBuffer());
+            PARENT_CHAR = getParentOffset(offset, oopSize, memCharBuffer(a, 0), bb.asCharBuffer());
+            PARENT_INT = getParentOffset(offset, oopSize, memIntBuffer(a, 0), bb.asIntBuffer());
+            PARENT_LONG = getParentOffset(offset, oopSize, memLongBuffer(a, 0), bb.asLongBuffer());
+            PARENT_FLOAT = getParentOffset(offset, oopSize, memFloatBuffer(a, 0), bb.asFloatBuffer());
+            PARENT_DOUBLE = getParentOffset(offset, oopSize, memDoubleBuffer(a, 0), bb.asDoubleBuffer());
         } catch (Throwable t) {
             throw new UnsupportedOperationException(t);
-        }
-
-        // JDK-12 has a JIT compilation bug related to Unsafe. In LWJGL applications it is triggered when
-        // making concurrent calls to the custom slice/duplicate implementations, during JVM start-up. An
-        // effective workaround is to warm-up Unsafe.putObject in a single thread (this static-init block).
-        for (int i = 0; i < 10000; i++) {
-            UNSAFE.putObject(bb, PARENT_BYTE, UNSAFE.getObject(bb, PARENT_BYTE));
         }
 
         PAGE_SIZE = UNSAFE.pageSize();
@@ -308,6 +305,15 @@ public final class MemoryUtil {
     }
 
     /**
+     * {@code CLongBuffer} version of {@link #memAlloc}.
+     *
+     * @param size the number of C long values to allocate.
+     */
+    public static CLongBuffer memAllocCLong(int size) {
+        return Pointer.Default.wrap(CLongBuffer.class, nmemAllocChecked(getAllocationSize(size, CLONG_SHIFT)), size);
+    }
+
+    /**
      * DoubleBuffer version of {@link #memAlloc}.
      *
      * @param size the number of double values to allocate.
@@ -346,8 +352,8 @@ public final class MemoryUtil {
         }
     }
 
-    /** PointerBuffer version of {@link #memFree}. */
-    public static void memFree(@Nullable PointerBuffer ptr) {
+    /** {@code CustomBuffer} version of {@link #memFree}. */
+    public static void memFree(@Nullable CustomBuffer ptr) {
         if (ptr != null) {
             nmemFree(ptr.address);
         }
@@ -447,6 +453,15 @@ public final class MemoryUtil {
     }
 
     /**
+     * {@code CLongBuffer} version of {@link #memCalloc}.
+     *
+     * @param num the number of C long values to allocate.
+     */
+    public static CLongBuffer memCallocCLong(int num) {
+        return Pointer.Default.wrap(CLongBuffer.class, nmemCallocChecked(num, CLONG_SIZE), num);
+    }
+
+    /**
      * DoubleBuffer version of {@link #memCalloc}.
      *
      * @param num the number of double values to allocate.
@@ -542,6 +557,19 @@ public final class MemoryUtil {
      */
     public static LongBuffer memRealloc(@Nullable LongBuffer ptr, int size) {
         return realloc(ptr, memLongBuffer(nmemReallocChecked(ptr == null ? NULL : UNSAFE.getLong(ptr, ADDRESS), getAllocationSize(size, 3)), size), size);
+    }
+
+    /**
+     * {@code CLongBuffer} version of {@link #memRealloc}.
+     *
+     * @param size the number of C long values to allocate.
+     */
+    public static CLongBuffer memRealloc(@Nullable CLongBuffer ptr, int size) {
+        CLongBuffer buffer = memCLongBuffer(nmemReallocChecked(ptr == null ? NULL : ptr.address, getAllocationSize(size, CLONG_SIZE)), size);
+        if (ptr != null) {
+            buffer.position(min(ptr.position(), size));
+        }
+        return buffer;
     }
 
     /**
@@ -849,6 +877,124 @@ public final class MemoryUtil {
     }
 
     /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link ShortBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asShortBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(ShortBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 1) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 1).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link CharBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asCharBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(CharBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 1) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 1).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link IntBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asIntBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(IntBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 2) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 2).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link LongBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asLongBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(LongBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 3) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 3).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link FloatBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asFloatBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(FloatBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 2) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 2).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link DoubleBuffer} between its current position and limit.
+     *
+     * <p>This operation is the inverse of {@link ByteBuffer#asDoubleBuffer()}. The returned {@code ByteBuffer} instance will be set to the native
+     * {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(DoubleBuffer buffer) {
+        if (CHECKS && (Integer.MAX_VALUE >> 3) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() << 3).order(NATIVE_ORDER);
+    }
+
+    /**
+     * Creates a {@link ByteBuffer} instance as a view of the specified {@link CustomBuffer} between its current position and limit.
+     *
+     * <p>The returned {@code ByteBuffer} instance will be set to the native {@link ByteOrder}.</p>
+     *
+     * @param buffer the source buffer
+     *
+     * @return the {@code ByteBuffer} view
+     */
+    public static ByteBuffer memByteBuffer(CustomBuffer<?> buffer) {
+        if (CHECKS && (Integer.MAX_VALUE / buffer.sizeof()) < buffer.remaining()) {
+            throw new IllegalArgumentException("The source buffer range is too wide");
+        }
+        return wrap(BUFFER_BYTE, memAddress(buffer), buffer.remaining() * buffer.sizeof()).order(NATIVE_ORDER);
+    }
+
+    /**
      * Creates a new direct ShortBuffer that starts at the specified memory address and has the specified capacity.
      *
      * <p>The {@code address} specified must be aligned to 2 bytes. If not, use {@code memByteBuffer(address, capacity * 2).asShortBuffer()}.</p>
@@ -941,6 +1087,29 @@ public final class MemoryUtil {
     }
 
     /**
+     * Creates a new direct {@code CLongBuffer} that starts at the specified memory address and has the specified capacity.
+     *
+     * <p>The {@code address} specified must be aligned to 8 bytes. If not, use {@code memByteBuffer(address, capacity * 8).asLongBuffer()}.</p>
+     *
+     * @param address  the starting memory address
+     * @param capacity the buffer capacity
+     *
+     * @return the new {@code CLongBuffer}
+     */
+    public static CLongBuffer memCLongBuffer(long address, int capacity) {
+        if (CHECKS) {
+            check(address);
+        }
+        return Pointer.Default.wrap(CLongBuffer.class, address, capacity);
+    }
+
+    /** Like {@link #memCLongBuffer}, but returns {@code null} if {@code address} is {@link #NULL}. */
+    @Nullable
+    public static CLongBuffer memCLongBufferSafe(long address, int capacity) {
+        return address == NULL ? null : Pointer.Default.wrap(CLongBuffer.class, address, capacity);
+    }
+
+    /**
      * Creates a new direct FloatBuffer that starts at the specified memory address and has the specified capacity.
      *
      * <p>The {@code address} specified must be aligned to 4 bytes. If not, use {@code memByteBuffer(address, capacity * 4).asFloatBuffer()}.</p>
@@ -1022,7 +1191,25 @@ public final class MemoryUtil {
      *
      * @return the duplicated buffer
      */
-    public static ByteBuffer memDuplicate(ByteBuffer buffer) { return duplicate(BUFFER_BYTE, buffer, PARENT_BYTE).order(buffer.order()); }
+    public static ByteBuffer memDuplicate(ByteBuffer buffer) {
+        ByteBuffer target;
+        try {
+            target = (ByteBuffer)UNSAFE.allocateInstance(BUFFER_BYTE);
+        } catch (InstantiationException e) {
+            throw new UnsupportedOperationException(e);
+        }
+
+        UNSAFE.putLong(target, ADDRESS, UNSAFE.getLong(buffer, ADDRESS));
+        UNSAFE.putInt(target, MARK, UNSAFE.getInt(buffer, MARK));
+        UNSAFE.putInt(target, POSITION, UNSAFE.getInt(buffer, POSITION));
+        UNSAFE.putInt(target, LIMIT, UNSAFE.getInt(buffer, LIMIT));
+        UNSAFE.putInt(target, CAPACITY, UNSAFE.getInt(buffer, CAPACITY));
+
+        Object attachment = UNSAFE.getObject(buffer, PARENT_BYTE);
+        UNSAFE.putObject(target, PARENT_BYTE, attachment == null ? buffer : attachment);
+
+        return target.order(buffer.order());
+    }
 
     /**
      * Duplicates the specified buffer.
@@ -1109,7 +1296,7 @@ public final class MemoryUtil {
      * @return the sliced buffer
      */
     public static ByteBuffer memSlice(ByteBuffer buffer) {
-        return slice(BUFFER_BYTE, buffer, memAddress0(buffer) + buffer.position(), buffer.remaining(), PARENT_BYTE).order(buffer.order());
+        return slice(buffer, memAddress0(buffer) + buffer.position(), buffer.remaining());
     }
 
     /**
@@ -1215,7 +1402,7 @@ public final class MemoryUtil {
         if (capacity < 0 || buffer.capacity() - position < capacity) {
             throw new IllegalArgumentException();
         }
-        return slice(BUFFER_BYTE, buffer, memAddress0(buffer) + position, capacity, PARENT_BYTE).order(buffer.order());
+        return slice(buffer, memAddress0(buffer) + position, capacity);
     }
 
     /**
@@ -1685,14 +1872,14 @@ public final class MemoryUtil {
     public static double memGetDouble(long ptr)   { return UNSAFE.getDouble(null, ptr); }
     public static long memGetCLong(long ptr) {
         return CLONG_SIZE == 8
-            ? UNSAFE.getLong(null, ptr) :
-            UNSAFE.getInt(null, ptr);
+            ? UNSAFE.getLong(null, ptr)
+            : UNSAFE.getInt(null, ptr);
     }
 
     public static long memGetAddress(long ptr) {
         return BITS64
-            ? UNSAFE.getLong(null, ptr) :
-            UNSAFE.getInt(null, ptr) & 0xFFFF_FFFFL;
+            ? UNSAFE.getLong(null, ptr)
+            : UNSAFE.getInt(null, ptr) & 0xFFFF_FFFFL;
     }
 
     public static void memPutByte(long ptr, byte value)     { UNSAFE.putByte(null, ptr, value); }
@@ -2727,21 +2914,18 @@ public final class MemoryUtil {
         return getIntFieldOffset(bb, MAGIC_CAPACITY);
     }
 
-    private static <T extends Buffer> long getParentOffset(int oopSize, T parent, Function<T, T> childFactory) {
-        T child = childFactory.apply(parent);
-
-        long offset = oopSize; // pointer aligned, cannot be at 0
+    private static <T extends Buffer> long getParentOffset(long offset, int oopSize, T buffer, T bufferWithAttachment) {
         switch (oopSize) {
             case Integer.BYTES: // 32-bit or 64-bit with compressed oops
                 while (true) {
-                    if (UNSAFE.getInt(parent, offset) != UNSAFE.getInt(child, offset)) {
+                    if (UNSAFE.getInt(buffer, offset) != UNSAFE.getInt(bufferWithAttachment, offset)) {
                         return offset;
                     }
                     offset += oopSize;
                 }
             case Long.BYTES: // 64-bit with uncompressed oops
                 while (true) {
-                    if (UNSAFE.getLong(parent, offset) != UNSAFE.getLong(child, offset)) {
+                    if (UNSAFE.getLong(buffer, offset) != UNSAFE.getLong(bufferWithAttachment, offset)) {
                         return offset;
                     }
                     offset += oopSize;
@@ -2768,6 +2952,25 @@ public final class MemoryUtil {
         return buffer;
     }
 
+    static ByteBuffer slice(ByteBuffer source, long address, int capacity) {
+        ByteBuffer target;
+        try {
+            target = (ByteBuffer)UNSAFE.allocateInstance(BUFFER_BYTE);
+        } catch (InstantiationException e) {
+            throw new UnsupportedOperationException(e);
+        }
+
+        UNSAFE.putLong(target, ADDRESS, address);
+        UNSAFE.putInt(target, MARK, -1);
+        UNSAFE.putInt(target, LIMIT, capacity);
+        UNSAFE.putInt(target, CAPACITY, capacity);
+
+        Object attachment = UNSAFE.getObject(source, PARENT_BYTE);
+        UNSAFE.putObject(target, PARENT_BYTE, attachment == null ? source : attachment);
+
+        return target.order(source.order());
+    }
+
     @SuppressWarnings("unchecked")
     static <T extends Buffer> T slice(Class<? extends T> clazz, T source, long address, int capacity, long attachmentOffset) {
         T target;
@@ -2781,7 +2984,7 @@ public final class MemoryUtil {
         UNSAFE.putInt(target, MARK, -1);
         UNSAFE.putInt(target, LIMIT, capacity);
         UNSAFE.putInt(target, CAPACITY, capacity);
-        // The JDK stores source here
+
         UNSAFE.putObject(target, attachmentOffset, UNSAFE.getObject(source, attachmentOffset));
 
         return target;
@@ -2801,7 +3004,7 @@ public final class MemoryUtil {
         UNSAFE.putInt(target, POSITION, UNSAFE.getInt(source, POSITION));
         UNSAFE.putInt(target, LIMIT, UNSAFE.getInt(source, LIMIT));
         UNSAFE.putInt(target, CAPACITY, UNSAFE.getInt(source, CAPACITY));
-        // The JDK stores source here
+
         UNSAFE.putObject(target, attachmentOffset, UNSAFE.getObject(source, attachmentOffset));
 
         return target;

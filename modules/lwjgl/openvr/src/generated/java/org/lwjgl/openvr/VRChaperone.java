@@ -24,6 +24,8 @@ import static org.lwjgl.system.MemoryUtil.*;
  */
 public class VRChaperone {
 
+    static { OpenVR.initialize(); }
+
     protected VRChaperone() {
         throw new UnsupportedOperationException();
     }
@@ -97,12 +99,15 @@ public class VRChaperone {
     // --- [ VRChaperone_SetSceneColor ] ---
 
     /** Unsafe version of: {@link #VRChaperone_SetSceneColor SetSceneColor} */
+    public static native void nVRChaperone_SetSceneColor(long color, long __functionAddress);
+
+    /** Unsafe version of: {@link #VRChaperone_SetSceneColor SetSceneColor} */
     public static void nVRChaperone_SetSceneColor(long color) {
         long __functionAddress = OpenVR.VRChaperone.SetSceneColor;
         if (CHECKS) {
             check(__functionAddress);
         }
-        callPV(color, __functionAddress);
+        nVRChaperone_SetSceneColor(color, __functionAddress);
     }
 
     /** Optionally give the chaperone system a hit about the color and brightness in the scene. */
@@ -147,6 +152,28 @@ public class VRChaperone {
             check(__functionAddress);
         }
         callV(bForce, __functionAddress);
+    }
+
+    // --- [ VRChaperone_ResetZeroPose ] ---
+
+    /**
+     * Sets the zero pose for the given tracker coordinate system to the current position and yaw of the HMD.
+     * 
+     * <p>After {@code ResetZeroPose} all {@link VRSystem#VRSystem_GetDeviceToAbsoluteTrackingPose GetDeviceToAbsoluteTrackingPose} calls as the origin will be relative to this new zero pose. The new zero coordinate
+     * system will not change the fact that the Y axis is up in the real world, so the next pose returned from {@code GetDeviceToAbsoluteTrackingPose} after a
+     * call to {@code ResetZeroPose} may not be exactly an identity matrix.</p>
+     * 
+     * <p>NOTE: This function overrides the user's previously saved zero pose and should only be called as the result of a user action. Users are also able to
+     * set their zero pose via the OpenVR Dashboard.</p>
+     *
+     * @param eTrackingUniverseOrigin one of:<br><table><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseSeated}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseStanding}</td></tr><tr><td>{@link VR#ETrackingUniverseOrigin_TrackingUniverseRawAndUncalibrated}</td></tr></table>
+     */
+    public static void VRChaperone_ResetZeroPose(@NativeType("ETrackingUniverseOrigin") int eTrackingUniverseOrigin) {
+        long __functionAddress = OpenVR.VRChaperone.ResetZeroPose;
+        if (CHECKS) {
+            check(__functionAddress);
+        }
+        callV(eTrackingUniverseOrigin, __functionAddress);
     }
 
 }
