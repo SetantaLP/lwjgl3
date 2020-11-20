@@ -670,7 +670,7 @@ val Compositor_CumulativeStats = struct(Module.OPENVR, "CompositorCumulativeStat
     uint32_t("m_nNumReprojectedFramesTimedOut", "")
 }
 
-val Compositor_StageRenderSettings = struct(Module.OPENVR, "CompositorStageRenderSettings", nativeName = "Compositor_StageRenderSettings", mutable = false) {
+val Compositor_StageRenderSettings = struct(Module.OPENVR, "CompositorStageRenderSettings", nativeName = "Compositor_StageRenderSettings") {
     HmdColor_t("m_PrimaryColor", "Primary color is applied as a tint to (i.e. multiplied with) the model's texture.")
     HmdColor_t("m_SecondaryColor", "")
 

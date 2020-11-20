@@ -127,6 +127,62 @@ public class CompositorStageRenderSettings extends Struct implements NativeResou
     @NativeType("bool")
     public boolean m_bWireframe() { return nm_bWireframe(address()); }
 
+    /** Copies the specified {@link HmdColor} to the {@code m_PrimaryColor} field. */
+    public CompositorStageRenderSettings m_PrimaryColor(@NativeType("HmdColor_t") HmdColor value) { nm_PrimaryColor(address(), value); return this; }
+    /** Passes the {@code m_PrimaryColor} field to the specified {@link java.util.function.Consumer Consumer}. */
+    public CompositorStageRenderSettings m_PrimaryColor(java.util.function.Consumer<HmdColor> consumer) { consumer.accept(m_PrimaryColor()); return this; }
+    /** Copies the specified {@link HmdColor} to the {@code m_SecondaryColor} field. */
+    public CompositorStageRenderSettings m_SecondaryColor(@NativeType("HmdColor_t") HmdColor value) { nm_SecondaryColor(address(), value); return this; }
+    /** Passes the {@code m_SecondaryColor} field to the specified {@link java.util.function.Consumer Consumer}. */
+    public CompositorStageRenderSettings m_SecondaryColor(java.util.function.Consumer<HmdColor> consumer) { consumer.accept(m_SecondaryColor()); return this; }
+    /** Sets the specified value to the {@code m_flVignetteInnerRadius} field. */
+    public CompositorStageRenderSettings m_flVignetteInnerRadius(float value) { nm_flVignetteInnerRadius(address(), value); return this; }
+    /** Sets the specified value to the {@code m_flVignetteOuterRadius} field. */
+    public CompositorStageRenderSettings m_flVignetteOuterRadius(float value) { nm_flVignetteOuterRadius(address(), value); return this; }
+    /** Sets the specified value to the {@code m_flFresnelStrength} field. */
+    public CompositorStageRenderSettings m_flFresnelStrength(float value) { nm_flFresnelStrength(address(), value); return this; }
+    /** Sets the specified value to the {@code m_bBackfaceCulling} field. */
+    public CompositorStageRenderSettings m_bBackfaceCulling(@NativeType("bool") boolean value) { nm_bBackfaceCulling(address(), value); return this; }
+    /** Sets the specified value to the {@code m_bGreyscale} field. */
+    public CompositorStageRenderSettings m_bGreyscale(@NativeType("bool") boolean value) { nm_bGreyscale(address(), value); return this; }
+    /** Sets the specified value to the {@code m_bWireframe} field. */
+    public CompositorStageRenderSettings m_bWireframe(@NativeType("bool") boolean value) { nm_bWireframe(address(), value); return this; }
+
+    /** Initializes this struct with the specified values. */
+    public CompositorStageRenderSettings set(
+        HmdColor m_PrimaryColor,
+        HmdColor m_SecondaryColor,
+        float m_flVignetteInnerRadius,
+        float m_flVignetteOuterRadius,
+        float m_flFresnelStrength,
+        boolean m_bBackfaceCulling,
+        boolean m_bGreyscale,
+        boolean m_bWireframe
+    ) {
+        m_PrimaryColor(m_PrimaryColor);
+        m_SecondaryColor(m_SecondaryColor);
+        m_flVignetteInnerRadius(m_flVignetteInnerRadius);
+        m_flVignetteOuterRadius(m_flVignetteOuterRadius);
+        m_flFresnelStrength(m_flFresnelStrength);
+        m_bBackfaceCulling(m_bBackfaceCulling);
+        m_bGreyscale(m_bGreyscale);
+        m_bWireframe(m_bWireframe);
+
+        return this;
+    }
+
+    /**
+     * Copies the specified struct data to this struct.
+     *
+     * @param src the source struct
+     *
+     * @return this struct
+     */
+    public CompositorStageRenderSettings set(CompositorStageRenderSettings src) {
+        memCopy(src.address(), address(), SIZEOF);
+        return this;
+    }
+
     // -----------------------------------
 
     /** Returns a new {@code CompositorStageRenderSettings} instance allocated with {@link MemoryUtil#memAlloc memAlloc}. The instance must be explicitly freed. */
@@ -287,6 +343,23 @@ public class CompositorStageRenderSettings extends Struct implements NativeResou
     /** Unsafe version of {@link #m_bWireframe}. */
     public static boolean nm_bWireframe(long struct) { return UNSAFE.getByte(null, struct + CompositorStageRenderSettings.M_BWIREFRAME) != 0; }
 
+    /** Unsafe version of {@link #m_PrimaryColor(HmdColor) m_PrimaryColor}. */
+    public static void nm_PrimaryColor(long struct, HmdColor value) { memCopy(value.address(), struct + CompositorStageRenderSettings.M_PRIMARYCOLOR, HmdColor.SIZEOF); }
+    /** Unsafe version of {@link #m_SecondaryColor(HmdColor) m_SecondaryColor}. */
+    public static void nm_SecondaryColor(long struct, HmdColor value) { memCopy(value.address(), struct + CompositorStageRenderSettings.M_SECONDARYCOLOR, HmdColor.SIZEOF); }
+    /** Unsafe version of {@link #m_flVignetteInnerRadius(float) m_flVignetteInnerRadius}. */
+    public static void nm_flVignetteInnerRadius(long struct, float value) { UNSAFE.putFloat(null, struct + CompositorStageRenderSettings.M_FLVIGNETTEINNERRADIUS, value); }
+    /** Unsafe version of {@link #m_flVignetteOuterRadius(float) m_flVignetteOuterRadius}. */
+    public static void nm_flVignetteOuterRadius(long struct, float value) { UNSAFE.putFloat(null, struct + CompositorStageRenderSettings.M_FLVIGNETTEOUTERRADIUS, value); }
+    /** Unsafe version of {@link #m_flFresnelStrength(float) m_flFresnelStrength}. */
+    public static void nm_flFresnelStrength(long struct, float value) { UNSAFE.putFloat(null, struct + CompositorStageRenderSettings.M_FLFRESNELSTRENGTH, value); }
+    /** Unsafe version of {@link #m_bBackfaceCulling(boolean) m_bBackfaceCulling}. */
+    public static void nm_bBackfaceCulling(long struct, boolean value) { UNSAFE.putByte(null, struct + CompositorStageRenderSettings.M_BBACKFACECULLING, value ? (byte)1 : (byte)0); }
+    /** Unsafe version of {@link #m_bGreyscale(boolean) m_bGreyscale}. */
+    public static void nm_bGreyscale(long struct, boolean value) { UNSAFE.putByte(null, struct + CompositorStageRenderSettings.M_BGREYSCALE, value ? (byte)1 : (byte)0); }
+    /** Unsafe version of {@link #m_bWireframe(boolean) m_bWireframe}. */
+    public static void nm_bWireframe(long struct, boolean value) { UNSAFE.putByte(null, struct + CompositorStageRenderSettings.M_BWIREFRAME, value ? (byte)1 : (byte)0); }
+
     // -----------------------------------
 
     /** An array of {@link CompositorStageRenderSettings} structs. */
@@ -346,6 +419,27 @@ public class CompositorStageRenderSettings extends Struct implements NativeResou
         /** Returns the value of the {@code m_bWireframe} field. */
         @NativeType("bool")
         public boolean m_bWireframe() { return CompositorStageRenderSettings.nm_bWireframe(address()); }
+
+        /** Copies the specified {@link HmdColor} to the {@code m_PrimaryColor} field. */
+        public CompositorStageRenderSettings.Buffer m_PrimaryColor(@NativeType("HmdColor_t") HmdColor value) { CompositorStageRenderSettings.nm_PrimaryColor(address(), value); return this; }
+        /** Passes the {@code m_PrimaryColor} field to the specified {@link java.util.function.Consumer Consumer}. */
+        public CompositorStageRenderSettings.Buffer m_PrimaryColor(java.util.function.Consumer<HmdColor> consumer) { consumer.accept(m_PrimaryColor()); return this; }
+        /** Copies the specified {@link HmdColor} to the {@code m_SecondaryColor} field. */
+        public CompositorStageRenderSettings.Buffer m_SecondaryColor(@NativeType("HmdColor_t") HmdColor value) { CompositorStageRenderSettings.nm_SecondaryColor(address(), value); return this; }
+        /** Passes the {@code m_SecondaryColor} field to the specified {@link java.util.function.Consumer Consumer}. */
+        public CompositorStageRenderSettings.Buffer m_SecondaryColor(java.util.function.Consumer<HmdColor> consumer) { consumer.accept(m_SecondaryColor()); return this; }
+        /** Sets the specified value to the {@code m_flVignetteInnerRadius} field. */
+        public CompositorStageRenderSettings.Buffer m_flVignetteInnerRadius(float value) { CompositorStageRenderSettings.nm_flVignetteInnerRadius(address(), value); return this; }
+        /** Sets the specified value to the {@code m_flVignetteOuterRadius} field. */
+        public CompositorStageRenderSettings.Buffer m_flVignetteOuterRadius(float value) { CompositorStageRenderSettings.nm_flVignetteOuterRadius(address(), value); return this; }
+        /** Sets the specified value to the {@code m_flFresnelStrength} field. */
+        public CompositorStageRenderSettings.Buffer m_flFresnelStrength(float value) { CompositorStageRenderSettings.nm_flFresnelStrength(address(), value); return this; }
+        /** Sets the specified value to the {@code m_bBackfaceCulling} field. */
+        public CompositorStageRenderSettings.Buffer m_bBackfaceCulling(@NativeType("bool") boolean value) { CompositorStageRenderSettings.nm_bBackfaceCulling(address(), value); return this; }
+        /** Sets the specified value to the {@code m_bGreyscale} field. */
+        public CompositorStageRenderSettings.Buffer m_bGreyscale(@NativeType("bool") boolean value) { CompositorStageRenderSettings.nm_bGreyscale(address(), value); return this; }
+        /** Sets the specified value to the {@code m_bWireframe} field. */
+        public CompositorStageRenderSettings.Buffer m_bWireframe(@NativeType("bool") boolean value) { CompositorStageRenderSettings.nm_bWireframe(address(), value); return this; }
 
     }
 
