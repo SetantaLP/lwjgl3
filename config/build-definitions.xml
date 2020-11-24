@@ -87,20 +87,99 @@ This script is included in /build.xml and /config/update-dependencies.xml.
         <isset property="env.LWJGL_BUILD_OFFLINE"/>
     </condition>
 
+    <condition property="build.platform" value="${env.LWJGL_BUILD_PLATFORM}">
+        <and>
+            <isset property="env.LWJGL_BUILD_PLATFORM"/>
+            <or>
+                <equals arg1="${env.LWJGL_BUILD_PLATFORM}" arg2="windows"/>
+                <equals arg1="${env.LWJGL_BUILD_PLATFORM}" arg2="linux"/>
+                <equals arg1="${env.LWJGL_BUILD_PLATFORM}" arg2="freebsd"/>
+                <equals arg1="${env.LWJGL_BUILD_PLATFORM}" arg2="solaris"/>
+                <equals arg1="${env.LWJGL_BUILD_PLATFORM}" arg2="macos"/>
+            </or>
+        </and>
+    </condition>
+
+    <condition property="platform-invalid">
+        <and>
+            <isset property="env.LWJGL_BUILD_PLATFORM"/>
+            <not>
+                <isset property="build.platform"/>
+            </not>
+        </and>
+    </condition>
+
+    <echo message="Ignoring unknown platform ${env.LWJGL_BUILD_PLATFORM}." level="warning" if:set="platform-invalid"/>
+
     <condition property="platform.windows">
-        <os family="Windows"/>
+        <or>
+            <and>
+                <os family="Windows"/>
+                <not>
+                    <isset property="build.platform"/>
+                </not>
+            </and>
+            <and>
+                <isset property="build.platform"/>
+                <equals arg1="${build.platform}" arg2="windows"/>
+            </and>
+        </or>
     </condition>
     <condition property="platform.linux">
-        <os name="Linux"/>
+        <or>
+            <and>
+                <os name="Linux"/>
+                <not>
+                    <isset property="build.platform"/>
+                </not>
+            </and>
+            <and>
+                <isset property="build.platform"/>
+                <equals arg1="${build.platform}" arg2="linux"/>
+            </and>
+        </or>
     </condition>
     <condition property="platform.freebsd">
-        <os name="FreeBSD"/>
+        <or>
+            <and>
+                <os name="FreeBSD"/>
+                <not>
+                    <isset property="build.platform"/>
+                </not>
+            </and>
+            <and>
+                <isset property="build.platform"/>
+                <equals arg1="${build.platform}" arg2="freebsd"/>
+            </and>
+        </or>
     </condition>
     <condition property="platform.solaris">
-        <os name="SunOS"/>
+        <or>
+            <and>
+                <os name="SunOS"/>
+                <not>
+                    <isset property="build.platform"/>
+                </not>
+            </and>
+            <and>
+                <isset property="build.platform"/>
+                <equals arg1="${build.platform}" arg2="solaris"/>
+            </and>
+        </or>
     </condition>
     <condition property="platform.macos">
-        <os name="Mac OS X"/>
+        <or>
+            <and>
+                <os name="Mac OS X"/>
+                <not>
+                    <isset property="build.platform"/>
+                </not>
+            </and>
+            <and>
+                <isset property="build.platform"/>
+                <equals arg1="${build.platform}" arg2="macos"/>
+            </and>
+        </or>
     </condition>
 
     <property name="platform" value="windows" if:set="platform.windows"/>
@@ -111,6 +190,13 @@ This script is included in /build.xml and /config/update-dependencies.xml.
 
     <property name="platform.remote" value="macosx" if:set="platform.macos"/>
     <property name="platform.remote" value="${platform}"/>
+
+    <condition property="build.msvc-cl" value="${env.LWJGL_BUILD_CL_OVERRIDE}" else="cl">
+        <and>
+            <isset property="env.LWJGL_BUILD_CL_OVERRIDE"/>
+            <isset property="platform.windows"/>
+        </and>
+    </condition>
 
     <!-- JDK version -->
     <condition property="jdk10"> <!-- 10 or higher -->
@@ -133,8 +219,31 @@ This script is included in /build.xml and /config/update-dependencies.xml.
     <condition property="core.java10"><isset property="core.java11"/></condition>
     <condition property="core.java9"><isset property="core.java10"/></condition>
 
-    <property name="jni.headers" location="${java.home}/include" if:set="jdk9"/>
-    <property name="jni.headers" location="${java.home}/../include" unless:set="jdk9"/>
+    <property name="build.jni-base-override" value="${env.LWJGL_BUILD_JNI_BASE_OVERRIDE}" if:set="env.LWJGL_BUILD_JNI_BASE_OVERRIDE"/>
+    <condition property="jni.headers-string" value="${java.home}/include">
+        <and>
+            <isset property="jdk9"/>
+            <not>
+                <isset property="build.jni-base-override"/>
+            </not>
+        </and>
+    </condition>
+    <condition property="jni.headers-string" value="${java.home}/../include">
+        <and>
+            <not>
+                <isset property="jdk9"/>
+            </not>
+            <not>
+                <isset property="build.jni-base-override"/>
+            </not>
+        </and>
+    </condition>
+    <condition property="jni.headers-string" value="${build.jni-base-override}/include">
+        <isset property="build.jni-base-override"/>
+    </condition>
+    
+    <property name="jni.headers" location="${jni.headers-string}"/>
+
     <condition property="set-boot-class-path">
         <and>
             <isset property="jdk9"/>

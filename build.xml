@@ -23,7 +23,10 @@
         <echo taskname="override" message="Build type: ${build.type}" if:set="env.LWJGL_BUILD_TYPE"/>
         <echo taskname="override" message="Build output: ${build.output}" if:set="env.LWJGL_BUILD_OUTPUT"/>
         <echo taskname="override" message="Build architecture: ${build.arch}" if:set="env.LWJGL_BUILD_ARCH"/>
+        <echo taskname="override" message="Build platform: ${build.platform}" if:set="build.platform"/>
+        <echo taskname="override" message="Build compiler override: ${build.msvc-cl}" if:set="env.LWJGL_BUILD_CL_OVERRIDE"/>
         <echo taskname="override" message="Build offline: ${build.offline}" if:set="env.LWJGL_BUILD_OFFLINE"/>
+        <echo taskname="override" message="Build JNI Base directory override: ${build.jni-base-override}" if:set="env.LWJGL_BUILD_JNI_BASE_OVERRIDE"/>
 
         <mkdir-symlink dir="bin"/>
 
